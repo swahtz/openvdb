@@ -16,6 +16,8 @@
 #define NANOVDB_TOOLS_CUDA_POINTSTOGRID_CUH_HAS_BEEN_INCLUDED
 
 #include <cub/cub.cuh>
+#include <thrust/binary_search.h>
+#include <thrust/execution_policy.h>
 #include <thrust/iterator/transform_iterator.h>
 #include <vector>
 #include <tuple>
@@ -572,17 +574,8 @@ struct BulkVoxelKeyFunctor {
                 uint64_t(NanoLower<BuildT>::CoordToOffset(ijk)) <<  9 | // leaf  offset: 16^3 = 2^12,   i.e. next 12 bits
                 uint64_t(NanoLeaf< BuildT>::CoordToOffset(ijk));        // voxel offset:  8^3 =  2^9,   i.e. first 9 bits
         };// voxelKey lambda functor
-        // Binary search in prefix-sum offsets to find tile index for this point
-        uint32_t lo = 0, hi = numTiles + 1;
-        while (lo < hi) {
-            uint32_t mid = (lo + hi) / 2;
-            if (d_tile_offsets[mid] <= uint32_t(tid)) {
-                lo = mid + 1;
-            } else {
-                hi = mid;
-            }
-        }
-        const uint64_t tileID = lo - 1;
+        // Find tile index for this point via upper_bound in prefix-sum offsets
+        const uint64_t tileID = thrust::upper_bound(thrust::seq, d_tile_offsets, d_tile_offsets + numTiles + 1, uint32_t(tid)) - d_tile_offsets - 1;
         Vec3T p = points[d_indx[tid]];
         if constexpr(util::is_same<BuildT, Point>::value) p = util::is_same<Vec3T, Vec3f>::value ? d_data->map.applyInverseMapF(p) : d_data->map.applyInverseMap(p);
         d_keys[tid] = voxelKey(tileID, p.round());
