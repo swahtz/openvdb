@@ -567,15 +567,14 @@ struct BulkVoxelKeyFunctor {
     using Vec3T = typename util::remove_const<typename pointer_traits<PtrT>::element_type>::type;
 
     __device__
-    void operator()(size_t tid, const PointsToGridData<BuildT> *d_data, const PtrT points, const uint32_t *d_tile_offsets, uint32_t numTiles, uint64_t *d_keys, const uint32_t *d_indx) {
+    void operator()(size_t tid, const PointsToGridData<BuildT> *d_data, const PtrT points, const uint32_t *d_tile_offsets, uint32_t numTiles, uint64_t *d_keys, const uint32_t *d_indx, uint32_t tileIdOffset) {
         auto voxelKey = [] __device__ (uint64_t tileID, const Coord &ijk){
             return tileID << 36 |                                       // upper offset: 64-15-12-9=28, i.e. last 28 bits
                 uint64_t(NanoUpper<BuildT>::CoordToOffset(ijk)) << 21 | // lower offset: 32^3 = 2^15,   i.e. next 15 bits
                 uint64_t(NanoLower<BuildT>::CoordToOffset(ijk)) <<  9 | // leaf  offset: 16^3 = 2^12,   i.e. next 12 bits
                 uint64_t(NanoLeaf< BuildT>::CoordToOffset(ijk));        // voxel offset:  8^3 =  2^9,   i.e. first 9 bits
         };// voxelKey lambda functor
-        // Find tile index for this point via upper_bound in prefix-sum offsets
-        const uint64_t tileID = thrust::upper_bound(thrust::seq, d_tile_offsets, d_tile_offsets + numTiles + 1, uint32_t(tid)) - d_tile_offsets - 1;
+        const uint64_t tileID = tileIdOffset + (thrust::upper_bound(thrust::seq, d_tile_offsets, d_tile_offsets + numTiles + 1, uint32_t(tid)) - d_tile_offsets - 1);
         Vec3T p = points[d_indx[tid]];
         if constexpr(util::is_same<BuildT, Point>::value) p = util::is_same<Vec3T, Vec3f>::value ? d_data->map.applyInverseMapF(p) : d_data->map.applyInverseMap(p);
         d_keys[tid] = voxelKey(tileID, p.round());
@@ -638,7 +637,7 @@ jump:// this marks the beginning of the actual algorithm
         CALL_CUBS(DeviceScan::InclusiveSum, d_points_per_tile, d_tile_offsets + 1, mData.nodeCount[2]);
         ResourceT::deallocateAsync(d_points_per_tile, pointCount*sizeof(uint32_t), ResourceT::DEFAULT_ALIGNMENT, mStream);
 
-        util::cuda::lambdaKernel<<<numBlocks(pointCount), mNumThreads, 0, mStream>>>(pointCount, BulkVoxelKeyFunctor<BuildT, PtrT>(), mDeviceData, points, d_tile_offsets, mData.nodeCount[2], d_keys, d_indx);
+        util::cuda::lambdaKernel<<<numBlocks(pointCount), mNumThreads, 0, mStream>>>(pointCount, BulkVoxelKeyFunctor<BuildT, PtrT>(), mDeviceData, points, d_tile_offsets, mData.nodeCount[2], d_keys, d_indx, uint32_t(0));
         cudaCheckError();
         CALL_CUBS(DeviceSegmentedRadixSort::SortPairs, d_keys, mData.d_keys, d_indx, mData.d_indx, (int)pointCount, (int)mData.nodeCount[2], d_tile_offsets, d_tile_offsets + 1, 0, 36);
         ResourceT::deallocateAsync(d_tile_offsets, (mData.nodeCount[2]+1)*sizeof(uint32_t), ResourceT::DEFAULT_ALIGNMENT, mStream);
