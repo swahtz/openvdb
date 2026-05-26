@@ -20,8 +20,6 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
-#include <chrono>
-#include <iostream>
 
 #include <cuda_runtime_api.h>
 
@@ -38,37 +36,16 @@ using BufferT = nanovdb::cuda::DeviceBuffer;
 
 namespace {
 
-using GridT  = nanovdb::FloatGrid;
-using CoordT = nanovdb::Coord;
-using RealT  = float;
-using Vec3T  = nanovdb::math::Vec3<RealT>;
-using RayT   = nanovdb::math::Ray<RealT>;
-using NMgrT  = nanovdb::NodeManager<float>;
+using GridT        = nanovdb::FloatGrid;
+using CoordT       = nanovdb::Coord;
+using RealT        = float;
+using Vec3T        = nanovdb::math::Vec3<RealT>;
+using RayT         = nanovdb::math::Ray<RealT>;
+using NodeManagerT = nanovdb::NodeManager<float>;
 
 constexpr int TILE_SIZE        = 16;
 constexpr int THREADS_PER_TILE = TILE_SIZE * TILE_SIZE;
 constexpr int NUM_WARPS        = THREADS_PER_TILE / 32;
-
-struct CamParams {
-    Vec3T eye;
-    float wBBoxDimZ;
-    Vec3T wBBoxCenter;
-    int   width, height;
-};
-
-__device__ inline void pixelToWorldRay(int px, int py, const CamParams& c, Vec3T& outO, Vec3T& outD)
-{
-    const float fov    = 45.f;
-    const float u      = (float(px) + 0.5f) / c.width;
-    const float v      = (float(py) + 0.5f) / c.height;
-    const float aspect = c.width / float(c.height);
-    const float Px     = (2.f * u - 1.f) * tanf(fov * 0.5f * float(M_PI) / 180.f) * aspect;
-    const float Py     = (2.f * v - 1.f) * tanf(fov * 0.5f * float(M_PI) / 180.f);
-    Vec3T       dir(Px, Py, -1.f);
-    dir.normalize();
-    outO = c.eye;
-    outD = dir;
-}
 
 __device__ inline nanovdb::math::BBox<nanovdb::Vec3f> coordBBoxToFloat(const nanovdb::CoordBBox& bb)
 {
@@ -77,12 +54,15 @@ __device__ inline nanovdb::math::BBox<nanovdb::Vec3f> coordBBoxToFloat(const nan
         nanovdb::Vec3f((float)bb.max()[0]+1.f, (float)bb.max()[1]+1.f, (float)bb.max()[2]+1.f));
 }
 
-__global__ void coarsePass(const GridT* __restrict__ grid,
-                           const NMgrT* __restrict__ mgr,
-                           CamParams cam,
-                           float* __restrict__ tMinOut,
-                           float* __restrict__ tMaxOut,
-                           int tilesX, int tilesY)
+__global__ void coarsePass(const GridT* __restrict__        grid,
+                           const NodeManagerT* __restrict__ mgr,
+                           RayGenOp<Vec3T>                  rayGenOp,
+                           int                              width,
+                           int                              height,
+                           float* __restrict__              tMinOut,
+                           float* __restrict__              tMaxOut,
+                           int                              tilesX,
+                           int                              tilesY)
 {
     __shared__ float sharedMin[NUM_WARPS];
     __shared__ float sharedMax[NUM_WARPS];
@@ -92,22 +72,22 @@ __global__ void coarsePass(const GridT* __restrict__ grid,
     const int tileY   = blockIdx.y;
     const int tileIdx = tileY * tilesX + tileX;
 
-    const int px = tileX * TILE_SIZE + (tid % TILE_SIZE);
-    const int py = tileY * TILE_SIZE + (tid / TILE_SIZE);
-    const bool isValidPixel = (px < cam.width) && (py < cam.height);
+    const int  px           = tileX * TILE_SIZE + (tid % TILE_SIZE);
+    const int  py           = tileY * TILE_SIZE + (tid / TILE_SIZE);
+    const bool isValidPixel = (px < width) && (py < height);
 
-    Vec3T rayO, rayD;
-    pixelToWorldRay(px, py, cam, rayO, rayD);
-    RayT  wRay(rayO, rayD);
-    RayT  iRay = wRay.worldToIndexF(*grid);
+    Vec3T rayEye, rayDir;
+    rayGenOp(py * width + px, width, height, rayEye, rayDir);
+    RayT wRay(rayEye, rayDir);
+    RayT iRay = wRay.worldToIndexF(*grid);
 
     float myMin = 1e30f, myMax = -1e30f;
 
     const uint64_t numUpper = mgr->upperCount();
     for (uint64_t u = 0; u < numUpper; ++u) {
         const auto& upper = mgr->upper((uint32_t)u);
-        auto uBox = coordBBoxToFloat(upper.bbox());
-        float ut0, ut1;
+        auto        uBox  = coordBBoxToFloat(upper.bbox());
+        float       ut0, ut1;
         if (isValidPixel && iRay.intersects(uBox, ut0, ut1)) {
             if (ut0 < myMin) myMin = ut0;
             if (ut1 > myMax) myMax = ut1;
@@ -141,9 +121,13 @@ __global__ void coarsePass(const GridT* __restrict__ grid,
 __global__ void finePass(const GridT* __restrict__ grid,
                          const float* __restrict__ tMinIn,
                          const float* __restrict__ tMaxIn,
-                         CamParams cam,
-                         float* __restrict__ image,
-                         int tilesX, int tilesY)
+                         RayGenOp<Vec3T>           rayGenOp,
+                         CompositeOp               compositeOp,
+                         int                       width,
+                         int                       height,
+                         float* __restrict__       outImage,
+                         int                       tilesX,
+                         int                       tilesY)
 {
     const int tid     = threadIdx.x;
     const int tileX   = blockIdx.x;
@@ -152,20 +136,21 @@ __global__ void finePass(const GridT* __restrict__ grid,
 
     const int px = tileX * TILE_SIZE + (tid % TILE_SIZE);
     const int py = tileY * TILE_SIZE + (tid / TILE_SIZE);
-    if (px >= cam.width || py >= cam.height) return;
-    const int pixel = py * cam.width + px;
+    if (px >= width || py >= height) return;
+    const int i = py * width + px;
 
     const float tMin = tMinIn[tileIdx];
     const float tMax = tMaxIn[tileIdx];
 
-    const int   maskBit = 1 << 7;
-    const float bg      = ((px & maskBit) ^ (py & maskBit)) ? 1.f : 0.5f;
+    if (tMax < tMin) {
+        // empty tile -- write background (alpha=0).
+        compositeOp(outImage, i, width, height, 0.0f, 0.0f);
+        return;
+    }
 
-    if (tMax < tMin) { image[pixel] = bg; return; } // empty tile, alpha=0
-
-    Vec3T rayO, rayD;
-    pixelToWorldRay(px, py, cam, rayO, rayD);
-    RayT wRay(rayO, rayD);
+    Vec3T rayEye, rayDir;
+    rayGenOp(i, width, height, rayEye, rayDir);
+    RayT wRay(rayEye, rayDir);
     RayT iRay = wRay.worldToIndexF(*grid);
 
     const float t0 = tMin > 0.f ? tMin : iRay.t0();
@@ -173,14 +158,14 @@ __global__ void finePass(const GridT* __restrict__ grid,
 
     auto acc = grid->tree().getAccessor();
 
+    // integrate fog transmittance along the clipped ray.
     const float dt = 0.5f;
-    float transmittance = 1.f;
+    float       transmittance = 1.f;
     for (float t = t0; t < t1; t += dt) {
         const float sigma = acc.getValue(CoordT::Floor(iRay(t))) * 0.1f;
         transmittance *= 1.f - sigma * dt;
     }
-    const float alpha = 1.f - transmittance;
-    image[pixel] = alpha * 0.f + (1.f - alpha) * bg;
+    compositeOp(outImage, i, width, height, 0.0f, 1.f - transmittance);
 }
 
 } // namespace
@@ -195,26 +180,23 @@ void runNanoVDBTileCull(nanovdb::GridHandle<BufferT>& handle, int numIterations,
     auto* d_grid = handle.deviceGrid<float>();
     if (!d_grid) throw std::runtime_error("GridHandle does not contain a valid device grid");
 
-    auto mgrHandle = nanovdb::cuda::createNodeManager<float>(d_grid);
-    auto* d_mgr    = mgrHandle.deviceMgr<float>();
+    auto  mgrHandle = nanovdb::cuda::createNodeManager<float>(d_grid);
+    auto* d_mgr     = mgrHandle.deviceMgr<float>();
     if (!d_mgr) throw std::runtime_error("NodeManager allocation failed");
 
-    auto hostMgrHandle = nanovdb::createNodeManager<float, nanovdb::HostBuffer>(*h_grid);
-    auto* h_mgr = hostMgrHandle.mgr<float>();
+    auto  hostMgrHandle = nanovdb::createNodeManager<float, nanovdb::HostBuffer>(*h_grid);
+    auto* h_mgr         = hostMgrHandle.mgr<float>();
     std::cout << "Tile-cull fog tracer: upperCount=" << h_mgr->upperCount()
               << "  lowerCount=" << h_mgr->lowerCount() << "\n";
 
-    const float wBBoxDimZ   = (float)h_grid->worldBBox().dim()[2] * 2.f;
+    const float wBBoxDimZ   = (float)h_grid->worldBBox().dim()[2] * 2;
     const Vec3T wBBoxCenter = Vec3T(h_grid->worldBBox().min() + h_grid->worldBBox().dim() * 0.5f);
-    CamParams cam;
-    cam.eye         = wBBoxCenter + Vec3T(0, 0, wBBoxDimZ);
-    cam.wBBoxDimZ   = wBBoxDimZ;
-    cam.wBBoxCenter = wBBoxCenter;
-    cam.width       = width;
-    cam.height      = height;
 
-    const int tilesX = (width  + TILE_SIZE - 1) / TILE_SIZE;
-    const int tilesY = (height + TILE_SIZE - 1) / TILE_SIZE;
+    RayGenOp<Vec3T> rayGenOp(wBBoxDimZ, wBBoxCenter);
+    CompositeOp     compositeOp;
+
+    const int tilesX   = (width  + TILE_SIZE - 1) / TILE_SIZE;
+    const int tilesY   = (height + TILE_SIZE - 1) / TILE_SIZE;
     const int numTiles = tilesX * tilesY;
 
     float *d_tMin = nullptr, *d_tMax = nullptr;
@@ -222,14 +204,16 @@ void runNanoVDBTileCull(nanovdb::GridHandle<BufferT>& handle, int numIterations,
     cudaMalloc(&d_tMax, sizeof(float) * numTiles);
 
     imageBuffer.deviceUpload();
-    float* d_image = reinterpret_cast<float*>(imageBuffer.deviceData());
+    float* d_outImage = reinterpret_cast<float*>(imageBuffer.deviceData());
 
     dim3 grid2D(tilesX, tilesY);
     dim3 block1D(THREADS_PER_TILE);
 
     for (int i = 0; i < 5; ++i) {
-        coarsePass<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
-        finePass  <<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, cam, d_image, tilesX, tilesY);
+        coarsePass<<<grid2D, block1D>>>(d_grid, d_mgr, rayGenOp, width, height,
+                                        d_tMin, d_tMax, tilesX, tilesY);
+        finePass  <<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, rayGenOp, compositeOp,
+                                        width, height, d_outImage, tilesX, tilesY);
     }
     cudaDeviceSynchronize();
 
@@ -239,9 +223,11 @@ void runNanoVDBTileCull(nanovdb::GridHandle<BufferT>& handle, int numIterations,
     float totalCoarse = 0.f, totalFine = 0.f;
     for (int i = 0; i < numIterations; ++i) {
         cudaEventRecord(e0);
-        coarsePass<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
+        coarsePass<<<grid2D, block1D>>>(d_grid, d_mgr, rayGenOp, width, height,
+                                        d_tMin, d_tMax, tilesX, tilesY);
         cudaEventRecord(e1);
-        finePass  <<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, cam, d_image, tilesX, tilesY);
+        finePass  <<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, rayGenOp, compositeOp,
+                                        width, height, d_outImage, tilesX, tilesY);
         cudaEventRecord(e2);
         cudaEventSynchronize(e2);
         float t01 = 0.f, t12 = 0.f;
@@ -259,7 +245,7 @@ void runNanoVDBTileCull(nanovdb::GridHandle<BufferT>& handle, int numIterations,
     cudaEventDestroy(e0); cudaEventDestroy(e1); cudaEventDestroy(e2);
 
     imageBuffer.deviceDownload();
-    saveImage("raytrace_fog_volume-nanovdb-cuda-tile_cull.pfm", width, height, (float*)imageBuffer.data());
+    saveImage("raytrace_fog_volume-nanovdb-cuda-tile-cull.pfm", width, height, (float*)imageBuffer.data());
 
     cudaFree(d_tMin);
     cudaFree(d_tMax);
