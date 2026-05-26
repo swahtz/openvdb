@@ -161,6 +161,8 @@ private:
     __hostdev__ bool step(const RayT& ray)
     {
 #ifdef ENFORCE_FORWARD_STEPPING
+        //if (mNext[axis] <= mT0) mNext[axis] += mT0 - mNext[axis] + fmaxf(mNext[axis]*1.0e-6f, 1.0e-6f);
+        //if (mNext[axis] <= mT0) mNext[axis] += mT0 - mNext[axis] + (mNext[axis] + 1.0f)*1.0e-6f;
         if (mNext[axis] <= mT0) {
             mNext[axis] += mT0 - 0.999999f * mNext[axis] + 1.0e-6f;
         }
@@ -267,6 +269,7 @@ public:
     __hostdev__ bool step(const RayT& ray)
     {
         const int axis = MinIndex(mNext);
+#if 1
         switch (axis) {
         case 0:
             return step<0>(ray);
@@ -275,6 +278,17 @@ public:
         default:
             return step<2>(ray);
         }
+#else
+#ifdef ENFORCE_FORWARD_STEPPING
+        if (mNext[axis] <= mT0) {
+            mNext[axis] += mT0 - 0.999999f * mNext[axis] + 1.0e-6f;
+        }
+#endif
+        mT0 = mNext[axis];
+        mNext[axis] += fabsf(ray.invDir()[axis]);
+        mVoxel[axis] += Dim * (ray.dir()[axis] > RealT(0) ? 1 : -1);
+        return mT0 <= ray.t1();
+#endif
     }
 
     /// @brief Return the index coordinates of the next node or voxel
