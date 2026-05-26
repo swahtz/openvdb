@@ -179,7 +179,7 @@ __global__ void finePass(const GridT* __restrict__ grid,
     CoordT ijk;
     float  v, t;
     if (nanovdb::math::ZeroCrossing(clipped, acc, ijk, v, t)) {
-        // write distance to surface. (we assume it is a uniform voxel)
+        // write distance to surface.
         const float wT0 = t * float(grid->voxelSize()[0]);
         compositeOp(outImage, i, width, height, wT0 / (wBBoxDimZ * 2), 1.0f);
     } else {
