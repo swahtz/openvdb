@@ -40,8 +40,6 @@ int main(int ac, char** av)
         const int height = 1024;
         BufferT   imageBuffer(width * height * sizeof(float));
 
-        // Run tile-cull first so the static path's chrono-based timing is
-        // at least warm; matches the level-set example.
         runNanoVDBTileCull(handle, numIterations, width, height, imageBuffer);
         runNanoVDB(handle, numIterations, width, height, imageBuffer);
 #if defined(NANOVDB_USE_OPENVDB)

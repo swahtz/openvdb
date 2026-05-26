@@ -40,9 +40,6 @@ int main(int ac, char** av)
         const int height = 1024;
         BufferT   imageBuffer(width * height * sizeof(float));
 
-        // Run tile-cull first so static (timed with chrono) is at least
-        // warm before the comparison; reduces but does not eliminate the
-        // methodology gap (static still includes host-side launch overhead).
         runNanoVDBTileCull(handle, numIterations, width, height, imageBuffer);
         runNanoVDB(handle, numIterations, width, height, imageBuffer);
 #if defined(NANOVDB_USE_OPENVDB)
