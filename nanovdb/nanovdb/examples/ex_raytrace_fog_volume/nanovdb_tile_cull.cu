@@ -1,8 +1,8 @@
 // Copyright Contributors to the OpenVDB Project
 // SPDX-License-Identifier: Apache-2.0
 
-// Beam-tracing renderer for the fog-volume example.  Mirrors the structure
-// of ex_raytrace_level_set/nanovdb_beam.cu:
+// Tile-cull renderer for the fog-volume example.  Mirrors the structure
+// of ex_raytrace_level_set/nanovdb_tile_cull.cu:
 //
 //   coarsePass:  one CUDA block per 16x16 screen tile (256 threads).  Each
 //                thread casts its pixel's ray and tests it against every
@@ -16,7 +16,7 @@
 //                immediately if tMax < tMin).
 //
 // Versus the level-set version only the fine kernel body differs (fog
-// integration instead of ZeroCrossing); the beam infrastructure is shared.
+// integration instead of ZeroCrossing); the tile-cull pre-pass is shared.
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -185,8 +185,8 @@ __global__ void finePass(const GridT* __restrict__ grid,
 
 } // namespace
 
-void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
-                    int width, int height, BufferT& imageBuffer)
+void runNanoVDBTileCull(nanovdb::GridHandle<BufferT>& handle, int numIterations,
+                        int width, int height, BufferT& imageBuffer)
 {
     auto* h_grid = handle.grid<float>();
     if (!h_grid) throw std::runtime_error("GridHandle does not contain a valid host grid");
@@ -201,7 +201,7 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
 
     auto hostMgrHandle = nanovdb::createNodeManager<float, nanovdb::HostBuffer>(*h_grid);
     auto* h_mgr = hostMgrHandle.mgr<float>();
-    std::cout << "Beam fog tracer: upperCount=" << h_mgr->upperCount()
+    std::cout << "Tile-cull fog tracer: upperCount=" << h_mgr->upperCount()
               << "  lowerCount=" << h_mgr->lowerCount() << "\n";
 
     const float wBBoxDimZ   = (float)h_grid->worldBBox().dim()[2] * 2.f;
@@ -250,7 +250,7 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
         totalCoarse += t01;
         totalFine   += t12;
     }
-    std::cout << "Beam fog tracer avg ms:"
+    std::cout << "Tile-cull fog tracer avg ms:"
               << " coarse=" << (totalCoarse / numIterations)
               << " fine=" << (totalFine / numIterations)
               << " total=" << ((totalCoarse + totalFine) / numIterations)
@@ -259,7 +259,7 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
     cudaEventDestroy(e0); cudaEventDestroy(e1); cudaEventDestroy(e2);
 
     imageBuffer.deviceDownload();
-    saveImage("raytrace_fog_volume-nanovdb-cuda-beam.pfm", width, height, (float*)imageBuffer.data());
+    saveImage("raytrace_fog_volume-nanovdb-cuda-tile_cull.pfm", width, height, (float*)imageBuffer.data());
 
     cudaFree(d_tMin);
     cudaFree(d_tMax);

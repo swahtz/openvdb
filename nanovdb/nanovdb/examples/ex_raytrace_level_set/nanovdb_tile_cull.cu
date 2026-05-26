@@ -1,9 +1,12 @@
 // Copyright Contributors to the OpenVDB Project
 // SPDX-License-Identifier: Apache-2.0
 
-// Beam-tracing renderer for the level-set raytrace example.
+// Tile-cull renderer for the level-set raytrace example.
 //
-// Two-kernel pipeline:
+// Two-kernel pipeline: a block-cooperative coarse pre-pass over the tree's
+// upper-internal nodes, followed by a per-pixel fine pass that runs the
+// stock ZeroCrossing on a t-clipped ray (or short-circuits for tiles that
+// the coarse pass classified as empty).
 //
 //   coarsePass:  one CUDA block per 16x16 screen tile (256 threads).  Each
 //                thread casts its pixel's ray and tests it against every
@@ -26,9 +29,10 @@
 //
 // The (tMin, tMax) union is strictly looser than the lower-internal
 // union, which is strictly looser than the leaf union, which strictly
-// contains the set of voxels the ray would visit -- so beam clipping
-// is conservative by construction and the fine pass produces the same
-// surface hits as static (pixel diff is 0-5 / 1M on every tested SDF).
+// contains the set of voxels the ray would visit -- so the tile-cull
+// clipping is conservative by construction and the fine pass produces
+// the same surface hits as static (pixel diff is 0-5 / 1M on every
+// tested SDF).
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -198,8 +202,8 @@ __global__ void finePass(const GridT* __restrict__ grid,
 
 } // namespace
 
-void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
-                    int width, int height, BufferT& imageBuffer)
+void runNanoVDBTileCull(nanovdb::GridHandle<BufferT>& handle, int numIterations,
+                        int width, int height, BufferT& imageBuffer)
 {
     auto* h_grid = handle.grid<float>();
     if (!h_grid) throw std::runtime_error("GridHandle does not contain a valid host grid");
@@ -214,7 +218,7 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
 
     auto hostMgrHandle = nanovdb::createNodeManager<float, nanovdb::HostBuffer>(*h_grid);
     auto* h_mgr = hostMgrHandle.mgr<float>();
-    std::cout << "Beam tracer: upperCount=" << h_mgr->upperCount()
+    std::cout << "Tile-cull tracer: upperCount=" << h_mgr->upperCount()
               << "  lowerCount=" << h_mgr->lowerCount() << "\n";
 
     const float wBBoxDimZ   = (float)h_grid->worldBBox().dim()[2] * 2.f;
@@ -264,7 +268,7 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
         totalCoarse += t01;
         totalFine   += t12;
     }
-    std::cout << "Beam tracer avg ms:"
+    std::cout << "Tile-cull tracer avg ms:"
               << " coarse=" << (totalCoarse / numIterations)
               << " fine=" << (totalFine / numIterations)
               << " total=" << ((totalCoarse + totalFine) / numIterations)
@@ -273,7 +277,7 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
     cudaEventDestroy(e0); cudaEventDestroy(e1); cudaEventDestroy(e2);
 
     imageBuffer.deviceDownload();
-    saveImage("raytrace_level_set-nanovdb-cuda-beam.pfm", width, height, (float*)imageBuffer.data());
+    saveImage("raytrace_level_set-nanovdb-cuda-tile_cull.pfm", width, height, (float*)imageBuffer.data());
 
     cudaFree(d_tMin);
     cudaFree(d_tMax);
