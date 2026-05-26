@@ -185,39 +185,35 @@ __global__ void finePass(const GridT* __restrict__ grid,
 
     auto acc = grid->tree().getAccessor();
 
-    // Walk the beam list, finding the earliest zero crossing.
-    float bestT = 1e30f;
-    bool  found = false;
+    // Union the t-ranges of all listed lowers, then run a single ZeroCrossing
+    // on the clipped ray.  This isolates the "skip empty tiles" win from the
+    // per-lower walk cost.  TODO(beam_M2b): replace with a leaf-only walker
+    // that descends directly from the listed lower-internal pointers and
+    // avoids the per-call root-descent inside ZeroCrossing.
+    float tMin = 1e30f, tMax = -1e30f;
     for (int k = 0; k < beamLen; ++k) {
         const int lowerIdx = beamLists[tileIdx * MAX_BEAM_LEN + k];
         auto bb = mgr->lower((uint32_t)lowerIdx).bbox();
         nanovdb::math::BBox<nanovdb::Vec3f> box(
             nanovdb::Vec3f((float)bb.min()[0],     (float)bb.min()[1],     (float)bb.min()[2]),
             nanovdb::Vec3f((float)bb.max()[0]+1.f, (float)bb.max()[1]+1.f, (float)bb.max()[2]+1.f));
-
         float tEnter, tExit;
-        if (!iRay.intersects(box, tEnter, tExit)) continue;
-        if (tEnter >= bestT) continue; // a closer hit already found
-
-        // Clip a copy of the ray to this lower's slab and run ZeroCrossing.
-        RayT clipped = iRay;
-        clipped.setTimes(tEnter, tExit);
-
-        CoordT ijk;
-        float v, t;
-        if (nanovdb::math::ZeroCrossing(clipped, acc, ijk, v, t)) {
-            if (t < bestT) {
-                bestT = t;
-                found = true;
-            }
+        if (iRay.intersects(box, tEnter, tExit)) {
+            if (tEnter < tMin) tMin = tEnter;
+            if (tExit  > tMax) tMax = tExit;
         }
     }
+    if (tMax < 0.f) { image[pixel] = bg; return; }
 
-    if (found) {
-        const float wT0 = bestT * float(grid->voxelSize()[0]);
+    RayT clipped = iRay;
+    clipped.setTimes(tMin > 0.f ? tMin : iRay.t0(), tMax);
+
+    CoordT ijk;
+    float v, t;
+    if (nanovdb::math::ZeroCrossing(clipped, acc, ijk, v, t)) {
+        const float wT0 = t * float(grid->voxelSize()[0]);
         const float val = wT0 / (cam.wBBoxDimZ * 2);
-        const float alpha = 1.f;
-        image[pixel] = alpha * val + (1.f - alpha) * bg;
+        image[pixel] = val; // alpha=1
     } else {
         image[pixel] = bg;
     }
