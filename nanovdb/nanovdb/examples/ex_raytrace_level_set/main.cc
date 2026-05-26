@@ -14,6 +14,7 @@ using BufferT = nanovdb::HostBuffer;
 #endif
 
 extern void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height, BufferT& imageBuffer);
+extern void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height, BufferT& imageBuffer);
 #if defined(NANOVDB_USE_OPENVDB)
 extern void runOpenVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height, BufferT& imageBuffer);
 #endif
@@ -40,6 +41,7 @@ int main(int ac, char** av)
         BufferT   imageBuffer(width * height * sizeof(float));
 
         runNanoVDB(handle, numIterations, width, height, imageBuffer);
+        runNanoVDBBeam(handle, numIterations, width, height, imageBuffer);
 #if defined(NANOVDB_USE_OPENVDB)
         runOpenVDB(handle, numIterations, width, height, imageBuffer);
 #endif
