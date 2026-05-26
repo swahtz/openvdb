@@ -22,13 +22,16 @@ using BufferT = nanovdb::cuda::DeviceBuffer;
 using BufferT = nanovdb::HostBuffer;
 #endif
 
-void runOpenVDB(nanovdb::GridHandle<nanovdb::cuda::DeviceBuffer>& handle, int numIterations, int width, int height, BufferT& imageBuffer)
+void runOpenVDB(nanovdb::GridHandle<nanovdb::cuda::DeviceBuffer>& handle, const BenchmarkOptions& opts, BufferT& imageBuffer)
 {
     using GridT = openvdb::FloatGrid;
     using CoordT = openvdb::Coord;
     using RealT = float;
     using Vec3T = openvdb::math::Vec3<RealT>;
     using RayT = openvdb::math::Ray<RealT>;
+
+    const int width = opts.width;
+    const int height = opts.height;
 
 #if 1
     openvdb::GridBase::Ptr srcGrid = nanovdb::tools::nanoToOpenVDB(handle);
@@ -82,17 +85,18 @@ void runOpenVDB(nanovdb::GridHandle<nanovdb::cuda::DeviceBuffer>& handle, int nu
         }
     };
 
-    {
-        float durationAvg = 0;
-        for (int i = 0; i < numIterations; ++i) {
-            float duration = renderImage(false, renderOp, width, height, h_outImage, h_grid.get());
-            //std::cout << "Duration(OpenVDB-Host) = " << duration << " ms" << std::endl;
-            durationAvg += duration;
-        }
-        durationAvg /= numIterations;
-        std::cout << "Average Duration(OpenVDB-Host) = " << durationAvg << " ms" << std::endl;
+    const std::string outPrefix = opts.outPrefix.empty() ? std::string("raytrace_level_set") : opts.outPrefix;
 
-        saveImage("raytrace_level_set-openvdb-host.pfm", width, height, (float*)imageBuffer.data());
+    {
+        for (int i = 0; i < opts.numWarmup; ++i)
+            (void)renderImage(false, renderOp, width, height, h_outImage, h_grid.get());
+        std::vector<float> timings;
+        timings.reserve(opts.numIterations);
+        for (int i = 0; i < opts.numIterations; ++i)
+            timings.push_back(renderImage(false, renderOp, width, height, h_outImage, h_grid.get()));
+        printStats("OpenVDB-Host", computeStats(timings));
+
+        saveImage(outPrefix + "-openvdb-host.pfm", width, height, (float*)imageBuffer.data());
     }
 }
 

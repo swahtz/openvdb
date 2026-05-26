@@ -6,6 +6,24 @@
 @par
 <B>Version 13.0.1</B> - <I>In Development</I>
 
+@par
+NanoVDB:
+- API Changes:
+  - <B>API break:</B> <TT>nanovdb::math::HDDA</TT> and <TT>nanovdb::math::DDA</TT>
+    no longer store <TT>mT1</TT>, <TT>mDelta</TT> or <TT>mStep</TT>; these are
+    re-derived from the live <TT>Ray</TT> on every call. As a consequence,
+    <TT>step()</TT>, <TT>next()</TT>, <TT>maxTime()</TT> and <TT>step&lt;axis&gt;()</TT>
+    now take a <TT>const RayT&amp;</TT> argument. The maximum time of the walk
+    is now always <TT>ray.t1()</TT>; callers that previously relied on a
+    distinct <TT>maxTime</TT> stored inside the HDDA should pre-shrink the
+    ray's time span via <TT>ray.setTimes()</TT> before calling <TT>init()</TT>.
+    Motivation: shrinks the per-thread register footprint of register-bound
+    raytrace kernels so they can run with higher occupancy.
+  - <TT>PNanoVDB</TT> mirror of the above: <TT>pnanovdb_hdda_t</TT> drops
+    <TT>tmax</TT>, <TT>step</TT> and <TT>delta</TT>; <TT>pnanovdb_hdda_step</TT>
+    now takes <TT>origin</TT>, <TT>direction</TT> and <TT>tmax</TT> so the
+    derived values can be recomputed per call.
+
 @htmlonly <a name="v13_0_0_changes"></a>@endhtmlonly
 @par
 <B>Version 13.0.0</B> - <I>November 3, 2025</I>

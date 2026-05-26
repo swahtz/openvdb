@@ -1512,10 +1512,10 @@ TEST_F(TestNanoVDB, HDDA)
         const RayT        ray(eye, dir);
         DDAT              dda(ray, 1 << (3 + 4 + 5));
         EXPECT_EQ(nanovdb::math::Delta<RealT>::value(), dda.time());
-        EXPECT_EQ(1.0, dda.next());
-        dda.step();
+        EXPECT_EQ(1.0, dda.next(ray));
+        dda.step(ray);
         EXPECT_EQ(1.0, dda.time());
-        EXPECT_EQ(4096 + 1.0, dda.next());
+        EXPECT_EQ(4096 + 1.0, dda.next(ray));
     }
     { // Check for the notorious +-0 issue!
 
@@ -1523,32 +1523,32 @@ TEST_F(TestNanoVDB, HDDA)
         const Vec3T eye1(2.0, 0.0, 0.0);
         const RayT  ray1(eye1, dir1);
         DDAT        dda1(ray1, 1 << 3);
-        dda1.step();
+        dda1.step(ray1);
 
         const Vec3T dir2(1.0, -0.0, -0.0);
         const Vec3T eye2(2.0, 0.0, 0.0);
         const RayT  ray2(eye2, dir2);
         DDAT        dda2(ray2, 1 << 3);
-        dda2.step();
+        dda2.step(ray2);
 
         const Vec3T dir3(1.0, -1e-9, -1e-9);
         const Vec3T eye3(2.0, 0.0, 0.0);
         const RayT  ray3(eye3, dir3);
         DDAT        dda3(ray3, 1 << 3);
-        dda3.step();
+        dda3.step(ray3);
 
         const Vec3T dir4(1.0, -1e-9, -1e-9);
         const Vec3T eye4(2.0, 0.0, 0.0);
         const RayT  ray4(eye3, dir4);
         DDAT        dda4(ray4, 1 << 3);
-        dda4.step();
+        dda4.step(ray4);
 
         EXPECT_EQ(dda1.time(), dda2.time());
         EXPECT_EQ(dda2.time(), dda3.time());
         EXPECT_EQ(dda3.time(), dda4.time());
-        EXPECT_EQ(dda1.next(), dda2.next());
-        EXPECT_EQ(dda2.next(), dda3.next());
-        EXPECT_EQ(dda3.next(), dda4.next());
+        EXPECT_EQ(dda1.next(ray1), dda2.next(ray2));
+        EXPECT_EQ(dda2.next(ray2), dda3.next(ray3));
+        EXPECT_EQ(dda3.next(ray3), dda4.next(ray4));
     }
     { // test voxel traversal along both directions of each axis
         const Vec3T eye(0, 0, 0);
@@ -1559,7 +1559,7 @@ TEST_F(TestNanoVDB, HDDA)
                 RayT        ray(eye, dir);
                 DDAT        dda(ray, 1 << 0);
                 for (int i = 1; i <= 10; ++i) {
-                    EXPECT_TRUE(dda.step());
+                    EXPECT_TRUE(dda.step(ray));
                     EXPECT_EQ(i, dda.time());
                 }
             }
@@ -1575,7 +1575,7 @@ TEST_F(TestNanoVDB, HDDA)
                 RayT        ray(eye, dir);
                 DDAT        dda(ray, 1 << 3);
                 for (int i = 1; i <= 10; ++i) {
-                    EXPECT_TRUE(dda.step());
+                    EXPECT_TRUE(dda.step(ray));
                     EXPECT_EQ(8 * i, dda.time());
                 }
             }
@@ -1592,14 +1592,64 @@ TEST_F(TestNanoVDB, HDDA)
                 DDAT        dda(ray, 1 << 3);
                 double      next = 0;
                 for (int i = 1; i <= 10; ++i) {
-                    EXPECT_TRUE(dda.step());
+                    EXPECT_TRUE(dda.step(ray));
                     EXPECT_EQ(4 * i, dda.time());
                     if (i > 1) {
                         EXPECT_EQ(dda.time(), next);
                     }
-                    next = dda.next();
+                    next = dda.next(ray);
                 }
             }
+        }
+    }
+    { // Regression test: walk a known oblique ray and compare HDDA's
+      // (time, voxel, next) sequence against an independent reference
+      // computed from first principles. The reference re-derives mNext using
+      // the same pos = ray(t0) starting point as HDDA::init so floating-point
+      // drift between the two stays bit-identical, even with the default
+      // ray.t0() = Delta offset. A change to the walk algorithm that perturbs
+      // any value by even a ULP will fall out of this check.
+        const Vec3T eye(0.25f, 0.75f, 0.5f);
+        const Vec3T dir(0.5f, 1.0f, 0.25f);
+        const RayT  ray(eye, dir);
+        DDAT        dda(ray, 1);
+
+        const Vec3T pos = ray(ray.t0()); // matches HDDA::init's local `pos`
+        const Vec3T inv = ray.invDir();
+        nanovdb::Coord refVoxel(int(std::floor(pos[0])), int(std::floor(pos[1])), int(std::floor(pos[2])));
+        float refNext[3];
+        for (int axis = 0; axis < 3; ++axis) {
+            if (dir[axis] == 0.0f) {
+                refNext[axis] = nanovdb::math::Maximum<float>::value();
+            } else if (inv[axis] > 0.0f) {
+                refNext[axis] = ray.t0() + (refVoxel[axis] + 1 - pos[axis]) * inv[axis];
+            } else {
+                refNext[axis] = ray.t0() + (refVoxel[axis] - pos[axis]) * inv[axis];
+            }
+        }
+        float refTime = ray.t0();
+
+        for (int i = 0; i < 8; ++i) {
+            // Compare HDDA against the reference walk before stepping.
+            EXPECT_EQ(refTime, dda.time());
+            EXPECT_EQ(refVoxel[0], dda.voxel()[0]);
+            EXPECT_EQ(refVoxel[1], dda.voxel()[1]);
+            EXPECT_EQ(refVoxel[2], dda.voxel()[2]);
+            const float expectedNext = std::min(ray.t1(),
+                                                std::min(refNext[0],
+                                                         std::min(refNext[1], refNext[2])));
+            EXPECT_EQ(expectedNext, dda.next(ray));
+
+            // Step the reference: pick the axis with the smallest next, advance.
+            int axis = 0;
+            if (refNext[1] < refNext[0])
+                axis = 1;
+            if (refNext[2] < refNext[axis])
+                axis = 2;
+            refTime = refNext[axis];
+            refNext[axis] += std::fabs(inv[axis]);
+            refVoxel[axis] += (dir[axis] > 0.0f) ? 1 : -1;
+            EXPECT_TRUE(dda.step(ray));
         }
     }
 #if 0

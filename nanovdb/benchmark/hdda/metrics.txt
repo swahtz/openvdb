@@ -1,0 +1,21 @@
+# Metrics collected by profile_hdda.sh - one per line, # for comments.
+# These are the headline numbers for the lean-HDDA / register-pressure story.
+
+# Headline: per-thread register count chosen by ptxas at launch time.
+launch__registers_per_thread
+
+# Achieved occupancy: how full the SM ran on average.
+sm__warps_active.avg.pct_of_peak_sustained_active
+
+# Issue stalls caused by "no instruction ready" - i.e. ILP starvation.
+smsp__warp_issue_stalled_no_instruction.avg.pct_of_peak_sustained_active
+
+# Sustained warp throughput.
+smsp__inst_executed.avg.per_cycle_active
+
+# Off-chip memory traffic.
+dram__bytes_read.sum
+dram__bytes_write.sum
+
+# Total kernel wall time as reported by ncu.
+gpu__time_duration.sum

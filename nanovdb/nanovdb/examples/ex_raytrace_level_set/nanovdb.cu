@@ -18,13 +18,16 @@ using BufferT = nanovdb::HostBuffer;
 
 #include "common.h"
 
-void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height, BufferT& imageBuffer)
+void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, const BenchmarkOptions& opts, BufferT& imageBuffer)
 {
     using GridT = nanovdb::FloatGrid;
     using CoordT = nanovdb::Coord;
     using RealT = float;
     using Vec3T = nanovdb::math::Vec3<RealT>;
     using RayT = nanovdb::math::Ray<RealT>;
+
+    const int width = opts.width;
+    const int height = opts.height;
 
     auto *h_grid = handle.grid<float>();
     if (!h_grid)
@@ -69,17 +72,18 @@ void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int wid
         }
     };
 
-    {
-        float durationAvg = 0;
-        for (int i = 0; i < numIterations; ++i) {
-            float duration = renderImage(false, renderOp, width, height, h_outImage, h_grid);
-            //std::cout << "Duration(NanoVDB-Host) = " << duration << " ms" << std::endl;
-            durationAvg += duration;
-        }
-        durationAvg /= numIterations;
-        std::cout << "Average Duration(NanoVDB-Host) = " << durationAvg << " ms" << std::endl;
+    const std::string outPrefix = opts.outPrefix.empty() ? std::string("raytrace_level_set") : opts.outPrefix;
 
-        saveImage("raytrace_level_set-nanovdb-host.pfm", width, height, (float*)imageBuffer.data());
+    {
+        for (int i = 0; i < opts.numWarmup; ++i)
+            (void)renderImage(false, renderOp, width, height, h_outImage, h_grid);
+        std::vector<float> timings;
+        timings.reserve(opts.numIterations);
+        for (int i = 0; i < opts.numIterations; ++i)
+            timings.push_back(renderImage(false, renderOp, width, height, h_outImage, h_grid));
+        printStats("NanoVDB-Host", computeStats(timings));
+
+        saveImage(outPrefix + "-nanovdb-host.pfm", width, height, (float*)imageBuffer.data());
     }
 
 #if defined(NANOVDB_USE_CUDA)
@@ -93,17 +97,16 @@ void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int wid
     float* d_outImage = reinterpret_cast<float*>(imageBuffer.deviceData());
 
     {
-        float durationAvg = 0;
-        for (int i = 0; i < numIterations; ++i) {
-            float duration = renderImage(true, renderOp, width, height, d_outImage, d_grid);
-            //std::cout << "Duration(NanoVDB-Cuda) = " << duration << " ms" << std::endl;
-            durationAvg += duration;
-        }
-        durationAvg /= numIterations;
-        std::cout << "Average Duration(NanoVDB-Cuda) = " << durationAvg << " ms" << std::endl;
+        for (int i = 0; i < opts.numWarmup; ++i)
+            (void)renderImage(true, renderOp, width, height, d_outImage, d_grid);
+        std::vector<float> timings;
+        timings.reserve(opts.numIterations);
+        for (int i = 0; i < opts.numIterations; ++i)
+            timings.push_back(renderImage(true, renderOp, width, height, d_outImage, d_grid));
+        printStats("NanoVDB-Cuda", computeStats(timings));
 
         imageBuffer.deviceDownload();
-        saveImage("raytrace_level_set-nanovdb-cuda.pfm", width, height, (float*)imageBuffer.data());
+        saveImage(outPrefix + "-nanovdb-cuda.pfm", width, height, (float*)imageBuffer.data());
     }
 #endif
 }

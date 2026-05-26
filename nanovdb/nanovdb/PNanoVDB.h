@@ -3289,14 +3289,16 @@ PNANOVDB_FORCE_INLINE float pnanovdb_dither_lookup(pnanovdb_bool_t enabled, int 
 
 #define PNANOVDB_HDDA_FLOAT_MAX 1e38f
 
+// NOTE: API break - the lean pnanovdb_hdda_t no longer stores tmax/step/delta;
+// callers must thread origin/direction/tmax into pnanovdb_hdda_step and
+// pnanovdb_hdda_update so those quantities can be re-derived per call. This
+// matches the lean C++ nanovdb::math::HDDA / DDA and shrinks the per-thread
+// register footprint on the GPU.
 struct pnanovdb_hdda_t
 {
     pnanovdb_int32_t dim;
     float tmin;
-    float tmax;
     pnanovdb_coord_t voxel;
-    pnanovdb_coord_t step;
-    pnanovdb_vec3_t delta;
     pnanovdb_vec3_t next;
 };
 PNANOVDB_STRUCT_TYPEDEF(pnanovdb_hdda_t)
@@ -3328,11 +3330,13 @@ PNANOVDB_FORCE_INLINE pnanovdb_vec3_t pnanovdb_hdda_ray_start(PNANOVDB_IN(pnanov
     return pos;
 }
 
+// NOTE: tmax is no longer stored on the hdda; it is accepted only for the
+// caller convention of passing the clip range alongside origin/direction.
 PNANOVDB_FORCE_INLINE void pnanovdb_hdda_init(PNANOVDB_INOUT(pnanovdb_hdda_t) hdda, PNANOVDB_IN(pnanovdb_vec3_t) origin, float tmin, PNANOVDB_IN(pnanovdb_vec3_t) direction, float tmax, int dim)
 {
+    (void)tmax;
     PNANOVDB_DEREF(hdda).dim = dim;
     PNANOVDB_DEREF(hdda).tmin = tmin;
-    PNANOVDB_DEREF(hdda).tmax = tmax;
 
     pnanovdb_vec3_t pos = pnanovdb_hdda_ray_start(origin, tmin, direction);
     pnanovdb_vec3_t dir_inv = pnanovdb_vec3_div(pnanovdb_vec3_uniform(1.f), PNANOVDB_DEREF(direction));
@@ -3343,60 +3347,42 @@ PNANOVDB_FORCE_INLINE void pnanovdb_hdda_init(PNANOVDB_INOUT(pnanovdb_hdda_t) hd
     if (PNANOVDB_DEREF(direction).x == 0.f)
     {
         PNANOVDB_DEREF(hdda).next.x = PNANOVDB_HDDA_FLOAT_MAX;
-        PNANOVDB_DEREF(hdda).step.x = 0;
-        PNANOVDB_DEREF(hdda).delta.x = 0.f;
     }
     else if (dir_inv.x > 0.f)
     {
-        PNANOVDB_DEREF(hdda).step.x = 1;
         PNANOVDB_DEREF(hdda).next.x = PNANOVDB_DEREF(hdda).tmin + (PNANOVDB_DEREF(hdda).voxel.x + dim - pos.x) * dir_inv.x;
-        PNANOVDB_DEREF(hdda).delta.x = dir_inv.x;
     }
     else
     {
-        PNANOVDB_DEREF(hdda).step.x = -1;
         PNANOVDB_DEREF(hdda).next.x = PNANOVDB_DEREF(hdda).tmin + (PNANOVDB_DEREF(hdda).voxel.x - pos.x) * dir_inv.x;
-        PNANOVDB_DEREF(hdda).delta.x = -dir_inv.x;
     }
 
     // y
     if (PNANOVDB_DEREF(direction).y == 0.f)
     {
         PNANOVDB_DEREF(hdda).next.y = PNANOVDB_HDDA_FLOAT_MAX;
-        PNANOVDB_DEREF(hdda).step.y = 0;
-        PNANOVDB_DEREF(hdda).delta.y = 0.f;
     }
     else if (dir_inv.y > 0.f)
     {
-        PNANOVDB_DEREF(hdda).step.y = 1;
         PNANOVDB_DEREF(hdda).next.y = PNANOVDB_DEREF(hdda).tmin + (PNANOVDB_DEREF(hdda).voxel.y + dim - pos.y) * dir_inv.y;
-        PNANOVDB_DEREF(hdda).delta.y = dir_inv.y;
     }
     else
     {
-        PNANOVDB_DEREF(hdda).step.y = -1;
         PNANOVDB_DEREF(hdda).next.y = PNANOVDB_DEREF(hdda).tmin + (PNANOVDB_DEREF(hdda).voxel.y - pos.y) * dir_inv.y;
-        PNANOVDB_DEREF(hdda).delta.y = -dir_inv.y;
     }
 
     // z
     if (PNANOVDB_DEREF(direction).z == 0.f)
     {
         PNANOVDB_DEREF(hdda).next.z = PNANOVDB_HDDA_FLOAT_MAX;
-        PNANOVDB_DEREF(hdda).step.z = 0;
-        PNANOVDB_DEREF(hdda).delta.z = 0.f;
     }
     else if (dir_inv.z > 0.f)
     {
-        PNANOVDB_DEREF(hdda).step.z = 1;
         PNANOVDB_DEREF(hdda).next.z = PNANOVDB_DEREF(hdda).tmin + (PNANOVDB_DEREF(hdda).voxel.z + dim - pos.z) * dir_inv.z;
-        PNANOVDB_DEREF(hdda).delta.z = dir_inv.z;
     }
     else
     {
-        PNANOVDB_DEREF(hdda).step.z = -1;
         PNANOVDB_DEREF(hdda).next.z = PNANOVDB_DEREF(hdda).tmin + (PNANOVDB_DEREF(hdda).voxel.z - pos.z) * dir_inv.z;
-        PNANOVDB_DEREF(hdda).delta.z = -dir_inv.z;
     }
 }
 
@@ -3437,26 +3423,29 @@ PNANOVDB_FORCE_INLINE pnanovdb_bool_t pnanovdb_hdda_update(PNANOVDB_INOUT(pnanov
     PNANOVDB_DEREF(hdda).voxel.y = PNANOVDB_DEREF(hdda).voxel.y > voxel_min.y ? PNANOVDB_DEREF(hdda).voxel.y : voxel_min.y;
     PNANOVDB_DEREF(hdda).voxel.z = PNANOVDB_DEREF(hdda).voxel.z > voxel_min.z ? PNANOVDB_DEREF(hdda).voxel.z : voxel_min.z;
 
-    if (PNANOVDB_DEREF(hdda).step.x != 0)
+    // axes with direction == 0 are disabled (next.* sits at PNANOVDB_HDDA_FLOAT_MAX
+    // from init); positive directions need the extra +dim*dir_inv to land on the
+    // *exit* face of the new dim-cube rather than its entry face.
+    if (PNANOVDB_DEREF(direction).x != 0.f)
     {
         PNANOVDB_DEREF(hdda).next.x = PNANOVDB_DEREF(hdda).tmin + (PNANOVDB_DEREF(hdda).voxel.x - pos.x) * dir_inv.x;
-        if (PNANOVDB_DEREF(hdda).step.x > 0)
+        if (dir_inv.x > 0.f)
         {
             PNANOVDB_DEREF(hdda).next.x += dim * dir_inv.x;
         }
     }
-    if (PNANOVDB_DEREF(hdda).step.y != 0)
+    if (PNANOVDB_DEREF(direction).y != 0.f)
     {
         PNANOVDB_DEREF(hdda).next.y = PNANOVDB_DEREF(hdda).tmin + (PNANOVDB_DEREF(hdda).voxel.y - pos.y) * dir_inv.y;
-        if (PNANOVDB_DEREF(hdda).step.y > 0)
+        if (dir_inv.y > 0.f)
         {
             PNANOVDB_DEREF(hdda).next.y += dim * dir_inv.y;
         }
     }
-    if (PNANOVDB_DEREF(hdda).step.z != 0)
+    if (PNANOVDB_DEREF(direction).z != 0.f)
     {
         PNANOVDB_DEREF(hdda).next.z = PNANOVDB_DEREF(hdda).tmin + (PNANOVDB_DEREF(hdda).voxel.z - pos.z) * dir_inv.z;
-        if (PNANOVDB_DEREF(hdda).step.z > 0)
+        if (dir_inv.z > 0.f)
         {
             PNANOVDB_DEREF(hdda).next.z += dim * dir_inv.z;
         }
@@ -3465,8 +3454,16 @@ PNANOVDB_FORCE_INLINE pnanovdb_bool_t pnanovdb_hdda_update(PNANOVDB_INOUT(pnanov
     return PNANOVDB_TRUE;
 }
 
-PNANOVDB_FORCE_INLINE pnanovdb_bool_t pnanovdb_hdda_step(PNANOVDB_INOUT(pnanovdb_hdda_t) hdda)
+// NOTE: API break - lean step now takes origin, direction and tmax so it can
+// re-derive the per-axis delta (= |dir_inv|) and step (= sign(direction)) that
+// the original struct kept around. dir_inv is computed once and reused.
+PNANOVDB_FORCE_INLINE pnanovdb_bool_t pnanovdb_hdda_step(PNANOVDB_INOUT(pnanovdb_hdda_t) hdda, PNANOVDB_IN(pnanovdb_vec3_t) origin, PNANOVDB_IN(pnanovdb_vec3_t) direction, float tmax)
 {
+    (void)origin;
+    pnanovdb_vec3_t dir_inv = pnanovdb_vec3_div(pnanovdb_vec3_uniform(1.f), PNANOVDB_DEREF(direction));
+    float abs_dir_inv_x = dir_inv.x < 0.f ? -dir_inv.x : dir_inv.x;
+    float abs_dir_inv_y = dir_inv.y < 0.f ? -dir_inv.y : dir_inv.y;
+    float abs_dir_inv_z = dir_inv.z < 0.f ? -dir_inv.z : dir_inv.z;
     pnanovdb_bool_t ret;
     if (PNANOVDB_DEREF(hdda).next.x < PNANOVDB_DEREF(hdda).next.y && PNANOVDB_DEREF(hdda).next.x < PNANOVDB_DEREF(hdda).next.z)
     {
@@ -3477,9 +3474,9 @@ PNANOVDB_FORCE_INLINE pnanovdb_bool_t pnanovdb_hdda_step(PNANOVDB_INOUT(pnanovdb
         }
 #endif
         PNANOVDB_DEREF(hdda).tmin = PNANOVDB_DEREF(hdda).next.x;
-        PNANOVDB_DEREF(hdda).next.x += PNANOVDB_DEREF(hdda).dim * PNANOVDB_DEREF(hdda).delta.x;
-        PNANOVDB_DEREF(hdda).voxel.x += PNANOVDB_DEREF(hdda).dim * PNANOVDB_DEREF(hdda).step.x;
-        ret = PNANOVDB_DEREF(hdda).tmin <= PNANOVDB_DEREF(hdda).tmax;
+        PNANOVDB_DEREF(hdda).next.x += PNANOVDB_DEREF(hdda).dim * abs_dir_inv_x;
+        PNANOVDB_DEREF(hdda).voxel.x += PNANOVDB_DEREF(hdda).dim * (PNANOVDB_DEREF(direction).x > 0.f ? 1 : -1);
+        ret = PNANOVDB_DEREF(hdda).tmin <= tmax;
     }
     else if (PNANOVDB_DEREF(hdda).next.y < PNANOVDB_DEREF(hdda).next.z)
     {
@@ -3490,9 +3487,9 @@ PNANOVDB_FORCE_INLINE pnanovdb_bool_t pnanovdb_hdda_step(PNANOVDB_INOUT(pnanovdb
         }
 #endif
         PNANOVDB_DEREF(hdda).tmin = PNANOVDB_DEREF(hdda).next.y;
-        PNANOVDB_DEREF(hdda).next.y += PNANOVDB_DEREF(hdda).dim * PNANOVDB_DEREF(hdda).delta.y;
-        PNANOVDB_DEREF(hdda).voxel.y += PNANOVDB_DEREF(hdda).dim * PNANOVDB_DEREF(hdda).step.y;
-        ret = PNANOVDB_DEREF(hdda).tmin <= PNANOVDB_DEREF(hdda).tmax;
+        PNANOVDB_DEREF(hdda).next.y += PNANOVDB_DEREF(hdda).dim * abs_dir_inv_y;
+        PNANOVDB_DEREF(hdda).voxel.y += PNANOVDB_DEREF(hdda).dim * (PNANOVDB_DEREF(direction).y > 0.f ? 1 : -1);
+        ret = PNANOVDB_DEREF(hdda).tmin <= tmax;
     }
     else
     {
@@ -3503,9 +3500,9 @@ PNANOVDB_FORCE_INLINE pnanovdb_bool_t pnanovdb_hdda_step(PNANOVDB_INOUT(pnanovdb
         }
 #endif
         PNANOVDB_DEREF(hdda).tmin = PNANOVDB_DEREF(hdda).next.z;
-        PNANOVDB_DEREF(hdda).next.z += PNANOVDB_DEREF(hdda).dim * PNANOVDB_DEREF(hdda).delta.z;
-        PNANOVDB_DEREF(hdda).voxel.z += PNANOVDB_DEREF(hdda).dim * PNANOVDB_DEREF(hdda).step.z;
-        ret = PNANOVDB_DEREF(hdda).tmin <= PNANOVDB_DEREF(hdda).tmax;
+        PNANOVDB_DEREF(hdda).next.z += PNANOVDB_DEREF(hdda).dim * abs_dir_inv_z;
+        PNANOVDB_DEREF(hdda).voxel.z += PNANOVDB_DEREF(hdda).dim * (PNANOVDB_DEREF(direction).z > 0.f ? 1 : -1);
+        ret = PNANOVDB_DEREF(hdda).tmin <= tmax;
     }
     return ret;
 }
@@ -3560,7 +3557,7 @@ PNANOVDB_FORCE_INLINE pnanovdb_bool_t pnanovdb_hdda_zero_crossing(
     pnanovdb_int32_t dim = pnanovdb_uint32_as_int32(pnanovdb_readaccessor_get_dim(PNANOVDB_GRID_TYPE_FLOAT, buf, acc, PNANOVDB_REF(ijk)));
     pnanovdb_hdda_t hdda;
     pnanovdb_hdda_init(PNANOVDB_REF(hdda), origin, tmin, direction, tmax, dim);
-    while (pnanovdb_hdda_step(PNANOVDB_REF(hdda)))
+    while (pnanovdb_hdda_step(PNANOVDB_REF(hdda), origin, direction, tmax))
     {
         pnanovdb_vec3_t pos_start = pnanovdb_hdda_ray_start(origin, hdda.tmin + 1.0001f, direction);
         ijk = pnanovdb_hdda_pos_to_ijk(PNANOVDB_REF(pos_start));
@@ -3570,7 +3567,7 @@ PNANOVDB_FORCE_INLINE pnanovdb_bool_t pnanovdb_hdda_zero_crossing(
         {
             continue;
         }
-        while (pnanovdb_hdda_step(PNANOVDB_REF(hdda)) && pnanovdb_readaccessor_is_active(grid_type, buf, acc, PNANOVDB_REF(hdda.voxel)))
+        while (pnanovdb_hdda_step(PNANOVDB_REF(hdda), origin, direction, tmax) && pnanovdb_readaccessor_is_active(grid_type, buf, acc, PNANOVDB_REF(hdda.voxel)))
         {
             ijk = hdda.voxel;
             pnanovdb_address_t address = pnanovdb_readaccessor_get_value_address(PNANOVDB_GRID_TYPE_FLOAT, buf, acc, PNANOVDB_REF(ijk));

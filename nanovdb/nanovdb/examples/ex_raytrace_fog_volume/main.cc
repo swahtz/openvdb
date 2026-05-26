@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <string>
 #include <nanovdb/io/IO.h>
 #include <nanovdb/tools/CreatePrimitives.h>
 
@@ -13,16 +14,24 @@ using BufferT = nanovdb::cuda::DeviceBuffer;
 using BufferT = nanovdb::HostBuffer;
 #endif
 
-extern void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height, BufferT& imageBuffer);
+#include "common.h"
+
+extern void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, const BenchmarkOptions& opts, BufferT& imageBuffer);
+extern void runNanoVDBHdda(nanovdb::GridHandle<BufferT>& handle, const BenchmarkOptions& opts, BufferT& imageBuffer);
 #if defined(NANOVDB_USE_OPENVDB)
-extern void runOpenVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height, BufferT& imageBuffer);
+extern void runOpenVDB(nanovdb::GridHandle<BufferT>& handle, const BenchmarkOptions& opts, BufferT& imageBuffer);
 #endif
 
 int main(int ac, char** av)
 {
     try {
+        // Optional first positional arg is a .nvdb file path; the rest are flags.
+        const bool hasInput = (ac > 1 && av[1][0] != '-');
+        const int  firstFlag = hasInput ? 2 : 1;
+        BenchmarkOptions opts = parseBenchmarkOptions(ac, av, firstFlag);
+
         nanovdb::GridHandle<BufferT> handle;
-        if (ac > 1) {
+        if (hasInput) {
             handle = nanovdb::io::readGrid<BufferT>(av[1]);
             std::cout << "Loaded NanoVDB grid[" << handle.gridMetaData()->shortGridName() << "]...\n";
         } else {
@@ -33,15 +42,12 @@ int main(int ac, char** av)
             throw std::runtime_error("Grid must be a fog volume");
         }
 
-        const int numIterations = 50;
+        BufferT imageBuffer(opts.width * opts.height * sizeof(float));
 
-        const int width = 1024;
-        const int height = 1024;
-        BufferT   imageBuffer(width * height * sizeof(float));
-
-        runNanoVDB(handle, numIterations, width, height, imageBuffer);
+        runNanoVDB(handle, opts, imageBuffer);
+        runNanoVDBHdda(handle, opts, imageBuffer);
 #if defined(NANOVDB_USE_OPENVDB)
-        runOpenVDB(handle, numIterations, width, height, imageBuffer);
+        runOpenVDB(handle, opts, imageBuffer);
 #endif
     }
     catch (const std::exception& e) {

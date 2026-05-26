@@ -31,6 +31,10 @@ option(NANOVDB_BUILD_PYTHON_MODULE "Build the nanovdb Python module" OFF)
 option(NANOVDB_USE_INTRINSICS "Build with hardware intrinsics support" OFF)
 option(NANOVDB_USE_CUDA "Build with CUDA support" OFF)
 option(NANOVDB_CUDA_KEEP_PTX "Keep CUDA PTX" OFF)
+option(NANOVDB_CUDA_PTXAS_VERBOSE
+  "Pass -Xptxas=-v to nvcc; reports register usage and spill counts per kernel" OFF)
+option(NANOVDB_USE_NVTX
+  "Wrap raytrace kernel launches in NVTX ranges so ncu/Nsight can isolate them" OFF)
 
 option(NANOVDB_USE_OPENVDB "Build with OpenVDB support" OFF)
 option(NANOVDB_USE_BLOSC "Build with BLOSC support" ${USE_BLOSC})
@@ -94,6 +98,12 @@ if(NANOVDB_USE_CUDA)
   endif()
 
   set(CMAKE_CUDA_FLAGS "${NANOVDB_CUDA_EXTENDED_LAMBDA} -use_fast_math -lineinfo ${CMAKE_CUDA_FLAGS}")
+
+  if(NANOVDB_CUDA_PTXAS_VERBOSE)
+    # -Xptxas=-v makes ptxas print "Used N registers, M bytes spill stores" per
+    # kernel during compilation - the headline number for the HDDA refactor.
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xptxas=-v")
+  endif()
 
   # workaround for win32 bug when nvcc "--keep" is used.
   if(WIN32)
@@ -345,6 +355,13 @@ if(NANOVDB_USE_CUDA)
   if(NCCL_FOUND)
     target_compile_definitions(nanovdb INTERFACE -DNANOVDB_USE_NCCL)
     target_link_libraries(nanovdb INTERFACE NCCL::NCCL)
+  endif()
+endif()
+
+if(NANOVDB_USE_NVTX)
+  target_compile_definitions(nanovdb INTERFACE -DNANOVDB_USE_NVTX)
+  if(NANOVDB_USE_CUDA AND TARGET CUDA::nvToolsExt)
+    target_link_libraries(nanovdb INTERFACE CUDA::nvToolsExt)
   endif()
 endif()
 
