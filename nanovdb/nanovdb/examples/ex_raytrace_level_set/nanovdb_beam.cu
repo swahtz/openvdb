@@ -250,7 +250,6 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
     cudaEvent_t e0, e1, e2;
     cudaEventCreate(&e0); cudaEventCreate(&e1); cudaEventCreate(&e2);
 
-    // Production timing: coarse + fine, per-frame.
     float totalCoarse = 0.f, totalFine = 0.f;
     for (int i = 0; i < numIterations; ++i) {
         cudaEventRecord(e0);
@@ -270,25 +269,6 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
               << " fine=" << (totalFine / numIterations)
               << " total=" << ((totalCoarse + totalFine) / numIterations)
               << "\n";
-
-    // Amortised timing: (tMin, tMax) per tile depends only on camera + grid,
-    // not on per-frame state, so a real-time driver with a static camera can
-    // reuse the coarse-pass output across frames.  This number is the steady-
-    // state per-frame cost in that case.
-    coarsePass<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
-    cudaDeviceSynchronize();
-    float totalFineOnly = 0.f;
-    for (int i = 0; i < numIterations; ++i) {
-        cudaEventRecord(e0);
-        finePass<<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, cam, d_image, tilesX, tilesY);
-        cudaEventRecord(e1);
-        cudaEventSynchronize(e1);
-        float t = 0.f;
-        cudaEventElapsedTime(&t, e0, e1);
-        totalFineOnly += t;
-    }
-    std::cout << "Beam tracer amortised (fine-only) avg ms: "
-              << (totalFineOnly / numIterations) << "\n";
 
     cudaEventDestroy(e0); cudaEventDestroy(e1); cudaEventDestroy(e2);
 

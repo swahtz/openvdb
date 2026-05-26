@@ -256,21 +256,6 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
               << " total=" << ((totalCoarse + totalFine) / numIterations)
               << "\n";
 
-    coarsePass<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
-    cudaDeviceSynchronize();
-    float totalFineOnly = 0.f;
-    for (int i = 0; i < numIterations; ++i) {
-        cudaEventRecord(e0);
-        finePass<<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, cam, d_image, tilesX, tilesY);
-        cudaEventRecord(e1);
-        cudaEventSynchronize(e1);
-        float t = 0.f;
-        cudaEventElapsedTime(&t, e0, e1);
-        totalFineOnly += t;
-    }
-    std::cout << "Beam fog tracer amortised (fine-only) avg ms: "
-              << (totalFineOnly / numIterations) << "\n";
-
     cudaEventDestroy(e0); cudaEventDestroy(e1); cudaEventDestroy(e2);
 
     imageBuffer.deviceDownload();
