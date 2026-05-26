@@ -14,6 +14,7 @@ using BufferT = nanovdb::HostBuffer;
 #endif
 
 extern void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height, BufferT& imageBuffer);
+extern void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height, BufferT& imageBuffer);
 #if defined(NANOVDB_USE_OPENVDB)
 extern void runOpenVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height, BufferT& imageBuffer);
 #endif
@@ -39,6 +40,9 @@ int main(int ac, char** av)
         const int height = 1024;
         BufferT   imageBuffer(width * height * sizeof(float));
 
+        // Run beam first so the static path's chrono-based timing is at
+        // least warm; matches the level-set example.
+        runNanoVDBBeam(handle, numIterations, width, height, imageBuffer);
         runNanoVDB(handle, numIterations, width, height, imageBuffer);
 #if defined(NANOVDB_USE_OPENVDB)
         runOpenVDB(handle, numIterations, width, height, imageBuffer);
