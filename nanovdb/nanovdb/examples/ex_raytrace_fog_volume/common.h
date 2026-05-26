@@ -75,7 +75,7 @@ inline float renderImage(bool useCuda, const RenderFn renderOp, int width, int h
 
         cudaEventRecord(startEvent, 0);
         computeForEach(
-            useCuda, width * height, 512, __FILE__, __LINE__, [renderOp, image, grid] __hostdev__(int start, int end) {
+            useCuda, width * height, 256, __FILE__, __LINE__, [renderOp, image, grid] __hostdev__(int start, int end) {
                 renderOp(start, end, image, grid);
             });
         cudaEventRecord(stopEvent, 0);
@@ -97,7 +97,7 @@ inline float renderImage(bool useCuda, const RenderFn renderOp, int width, int h
     using ClockT = std::chrono::high_resolution_clock;
     auto t0 = ClockT::now();
     computeForEach(
-        useCuda, width * height, 512, __FILE__, __LINE__, [renderOp, image, grid] __hostdev__(int start, int end) {
+        useCuda, width * height, 256, __FILE__, __LINE__, [renderOp, image, grid] __hostdev__(int start, int end) {
             renderOp(start, end, image, grid);
         });
     computeSync(useCuda, __FILE__, __LINE__);
