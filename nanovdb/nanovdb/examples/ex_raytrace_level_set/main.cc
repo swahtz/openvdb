@@ -40,8 +40,11 @@ int main(int ac, char** av)
         const int height = 1024;
         BufferT   imageBuffer(width * height * sizeof(float));
 
-        runNanoVDB(handle, numIterations, width, height, imageBuffer);
+        // Run beam first so static (timed with chrono) is at least warm
+        // before the comparison; reduces but does not eliminate the
+        // methodology gap (static still includes host-side launch overhead).
         runNanoVDBBeam(handle, numIterations, width, height, imageBuffer);
+        runNanoVDB(handle, numIterations, width, height, imageBuffer);
 #if defined(NANOVDB_USE_OPENVDB)
         runOpenVDB(handle, numIterations, width, height, imageBuffer);
 #endif
