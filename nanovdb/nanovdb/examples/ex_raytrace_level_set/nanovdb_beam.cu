@@ -178,6 +178,99 @@ __global__ void coarsePass(const GridT* __restrict__ grid,
     }
 }
 
+// Merged single-kernel beam tracer.  Builds the (tMin, tMax) union for the
+// tile in shared memory (coarse phase), then each thread clips its ray and
+// runs ZeroCrossing (fine phase).  No global round-trip.
+__global__ void beamMerged(const GridT* __restrict__ grid,
+                           const NMgrT* __restrict__ mgr,
+                           CamParams cam,
+                           float* __restrict__ image,
+                           int tilesX, int tilesY)
+{
+    __shared__ unsigned int warpAny[NUM_WARPS];
+    __shared__ float        sharedMin[NUM_WARPS];
+    __shared__ float        sharedMax[NUM_WARPS];
+    __shared__ float        tileMin;
+    __shared__ float        tileMax;
+
+    const int tid     = threadIdx.x;
+    const int tileX   = blockIdx.x;
+    const int tileY   = blockIdx.y;
+
+    const int px = tileX * TILE_SIZE + (tid % TILE_SIZE);
+    const int py = tileY * TILE_SIZE + (tid / TILE_SIZE);
+    const bool isValidPixel = (px < cam.width) && (py < cam.height);
+
+    Vec3T rayO, rayD;
+    pixelToWorldRay(px, py, cam, rayO, rayD);
+    RayT  wRay(rayO, rayD);
+    RayT  iRay = wRay.worldToIndexF(*grid);
+
+    float myMin = 1e30f, myMax = -1e30f;
+
+    const uint64_t numUpper = mgr->upperCount();
+    for (uint64_t u = 0; u < numUpper; ++u) {
+        const auto& upper = mgr->upper((uint32_t)u);
+        auto uBox = coordBBoxToFloat(upper.bbox());
+        float ut0, ut1;
+        bool myUHit = isValidPixel && iRay.intersects(uBox, ut0, ut1);
+        if (!blockAnyHit(myUHit, warpAny)) continue;
+        for (auto it = upper.cbeginChild(); it; ++it) {
+            const auto& lower = *it;
+            auto lBox = coordBBoxToFloat(lower.bbox());
+            float lt0, lt1;
+            if (isValidPixel && iRay.intersects(lBox, lt0, lt1)) {
+                if (lt0 < myMin) myMin = lt0;
+                if (lt1 > myMax) myMax = lt1;
+            }
+        }
+    }
+
+    #pragma unroll
+    for (int off = 16; off >= 1; off /= 2) {
+        myMin = fminf(myMin, __shfl_xor_sync(0xFFFFFFFF, myMin, off));
+        myMax = fmaxf(myMax, __shfl_xor_sync(0xFFFFFFFF, myMax, off));
+    }
+    const int warpId = tid >> 5;
+    const int laneId = tid & 31;
+    if (laneId == 0) {
+        sharedMin[warpId] = myMin;
+        sharedMax[warpId] = myMax;
+    }
+    __syncthreads();
+    if (tid == 0) {
+        float blockMin = sharedMin[0], blockMax = sharedMax[0];
+        #pragma unroll
+        for (int w = 1; w < NUM_WARPS; ++w) {
+            blockMin = fminf(blockMin, sharedMin[w]);
+            blockMax = fmaxf(blockMax, sharedMax[w]);
+        }
+        tileMin = blockMin;
+        tileMax = blockMax;
+    }
+    __syncthreads();
+
+    // ---- fine phase ----
+    if (!isValidPixel) return;
+    const int pixel = py * cam.width + px;
+    const int  mask = 1 << 7;
+    const float bg  = ((px & mask) ^ (py & mask)) ? 1.f : 0.5f;
+    if (tileMax < tileMin) { image[pixel] = bg; return; }
+
+    RayT clipped = iRay;
+    clipped.setTimes(tileMin > 0.f ? tileMin : iRay.t0(), tileMax);
+
+    auto acc = grid->tree().getAccessor();
+    CoordT ijk;
+    float v, t;
+    if (nanovdb::math::ZeroCrossing(clipped, acc, ijk, v, t)) {
+        const float wT0 = t * float(grid->voxelSize()[0]);
+        image[pixel] = wT0 / (cam.wBBoxDimZ * 2);
+    } else {
+        image[pixel] = bg;
+    }
+}
+
 __global__ void finePass(const GridT* __restrict__ grid,
                          const float* __restrict__ tMinIn,
                          const float* __restrict__ tMaxIn,
@@ -288,7 +381,6 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
         totalCoarse += t01;
         totalFine   += t12;
     }
-    cudaEventDestroy(e0); cudaEventDestroy(e1); cudaEventDestroy(e2);
 
     const float avgCoarse = totalCoarse / numIterations;
     const float avgFine   = totalFine   / numIterations;
@@ -297,6 +389,43 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
               << " fine=" << avgFine
               << " total=" << (avgCoarse + avgFine)
               << "\n";
+
+    // Amortised timing: precompute the coarse pass once (representing a real-
+    // time scenario where the camera is static across frames so (tMin,tMax)
+    // per tile can be reused).  Time only the fine pass.
+    coarsePass<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
+    cudaDeviceSynchronize();
+
+    float totalFineOnly = 0.f;
+    for (int i = 0; i < numIterations; ++i) {
+        cudaEventRecord(e0);
+        finePass<<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, cam, d_image, tilesX, tilesY);
+        cudaEventRecord(e1);
+        cudaEventSynchronize(e1);
+        float t = 0.f;
+        cudaEventElapsedTime(&t, e0, e1);
+        totalFineOnly += t;
+    }
+    std::cout << "Beam tracer (amortised) fine-only avg ms: " << (totalFineOnly / numIterations) << "\n";
+
+    // Merged single-kernel timing.
+    for (int i = 0; i < 5; ++i) {
+        beamMerged<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_image, tilesX, tilesY);
+    }
+    cudaDeviceSynchronize();
+    float totalMerged = 0.f;
+    for (int i = 0; i < numIterations; ++i) {
+        cudaEventRecord(e0);
+        beamMerged<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_image, tilesX, tilesY);
+        cudaEventRecord(e1);
+        cudaEventSynchronize(e1);
+        float t = 0.f;
+        cudaEventElapsedTime(&t, e0, e1);
+        totalMerged += t;
+    }
+    std::cout << "Beam tracer (merged single kernel) avg ms: " << (totalMerged / numIterations) << "\n";
+
+    cudaEventDestroy(e0); cudaEventDestroy(e1); cudaEventDestroy(e2);
 
     imageBuffer.deviceDownload();
     saveImage("raytrace_level_set-nanovdb-cuda-beam.pfm", width, height, (float*)imageBuffer.data());
