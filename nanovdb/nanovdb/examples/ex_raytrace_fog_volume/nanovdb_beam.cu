@@ -4,18 +4,19 @@
 // Beam-tracing renderer for the fog-volume example.  Mirrors the structure
 // of ex_raytrace_level_set/nanovdb_beam.cu:
 //
-//   coarsePass:  one CUDA block per 16x16 screen tile (256 threads). Walks
-//                the tree hierarchically (upper -> lower) and computes the
-//                tile's conservative union [tMin, tMax] over all lowers a
-//                ray in the tile hits.
+//   coarsePass:  one CUDA block per 16x16 screen tile (256 threads).  Each
+//                thread casts its pixel's ray and tests it against every
+//                upper-internal-node bbox; a block-wide reduction produces
+//                the conservative union (tMin, tMax) over the upper-internal
+//                bboxes the tile's rays hit.
 //
-//   finePass:    same launch geometry.  Each thread clips its ray to
-//                (tMin, tMax) and integrates the fog transmittance only
-//                across that range.  Empty tiles short-circuit to alpha=0.
+//   finePass:    same launch geometry.  Each thread clips its ray to the
+//                tile's (tMin, tMax) and runs the fixed-step transmittance
+//                integration on the clipped ray (or returns background
+//                immediately if tMax < tMin).
 //
-// Versus the level-set version, only the fine kernel body differs: instead
-// of running ZeroCrossing on the clipped ray, we run the fixed-step
-// transmittance accumulation that the stock fog kernel uses.
+// Versus the level-set version only the fine kernel body differs (fog
+// integration instead of ZeroCrossing); the beam infrastructure is shared.
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -76,37 +77,12 @@ __device__ inline nanovdb::math::BBox<nanovdb::Vec3f> coordBBoxToFloat(const nan
         nanovdb::Vec3f((float)bb.max()[0]+1.f, (float)bb.max()[1]+1.f, (float)bb.max()[2]+1.f));
 }
 
-__device__ inline bool blockAnyHit(bool myHit, unsigned int* warpAny)
-{
-    const int tid = threadIdx.x;
-    const int warpId = tid >> 5;
-    const int laneId = tid & 31;
-    unsigned int warpMask = __ballot_sync(0xFFFFFFFF, myHit);
-    if (laneId == 0) warpAny[warpId] = warpMask;
-    __syncthreads();
-    if (tid == 0) {
-        unsigned int any = 0;
-        #pragma unroll
-        for (int w = 0; w < NUM_WARPS; ++w) any |= warpAny[w];
-        warpAny[0] = any;
-    }
-    __syncthreads();
-    return warpAny[0] != 0;
-}
-
-// Cheapest coarse pass: just the upper-internal level.  Each thread tests
-// its ray against every upper bbox (~8 per scene) and reduces (myMin,
-// myMax) block-wide.  No per-upper sync, no lower descent.  Resulting
-// t-range is looser than the lower-level version but strictly contains
-// it -- so the fine ZeroCrossing/transmittance accumulation produces the
-// same surface hits.  HDDA inside fine walks empty upper-internal
-// regions at the upper's dim, very cheap.
-__global__ void coarsePassUpperOnly(const GridT* __restrict__ grid,
-                                    const NMgrT* __restrict__ mgr,
-                                    CamParams cam,
-                                    float* __restrict__ tMinOut,
-                                    float* __restrict__ tMaxOut,
-                                    int tilesX, int tilesY)
+__global__ void coarsePass(const GridT* __restrict__ grid,
+                           const NMgrT* __restrict__ mgr,
+                           CamParams cam,
+                           float* __restrict__ tMinOut,
+                           float* __restrict__ tMaxOut,
+                           int tilesX, int tilesY)
 {
     __shared__ float sharedMin[NUM_WARPS];
     __shared__ float sharedMax[NUM_WARPS];
@@ -162,77 +138,6 @@ __global__ void coarsePassUpperOnly(const GridT* __restrict__ grid,
     }
 }
 
-__global__ void coarsePass(const GridT* __restrict__ grid,
-                           const NMgrT* __restrict__ mgr,
-                           CamParams cam,
-                           float* __restrict__ tMinOut,
-                           float* __restrict__ tMaxOut,
-                           int tilesX, int tilesY)
-{
-    __shared__ unsigned int warpAny[NUM_WARPS];
-    __shared__ float        sharedMin[NUM_WARPS];
-    __shared__ float        sharedMax[NUM_WARPS];
-
-    const int tid     = threadIdx.x;
-    const int tileX   = blockIdx.x;
-    const int tileY   = blockIdx.y;
-    const int tileIdx = tileY * tilesX + tileX;
-
-    const int px = tileX * TILE_SIZE + (tid % TILE_SIZE);
-    const int py = tileY * TILE_SIZE + (tid / TILE_SIZE);
-    const bool isValidPixel = (px < cam.width) && (py < cam.height);
-
-    Vec3T rayO, rayD;
-    pixelToWorldRay(px, py, cam, rayO, rayD);
-    RayT  wRay(rayO, rayD);
-    RayT  iRay = wRay.worldToIndexF(*grid);
-
-    float myMin = 1e30f, myMax = -1e30f;
-
-    const uint64_t numUpper = mgr->upperCount();
-    for (uint64_t u = 0; u < numUpper; ++u) {
-        const auto& upper = mgr->upper((uint32_t)u);
-        auto uBox = coordBBoxToFloat(upper.bbox());
-        float ut0, ut1;
-        bool myUHit = isValidPixel && iRay.intersects(uBox, ut0, ut1);
-        if (!blockAnyHit(myUHit, warpAny)) continue;
-
-        for (auto it = upper.cbeginChild(); it; ++it) {
-            const auto& lower = *it;
-            auto lBox = coordBBoxToFloat(lower.bbox());
-            float lt0, lt1;
-            if (isValidPixel && iRay.intersects(lBox, lt0, lt1)) {
-                if (lt0 < myMin) myMin = lt0;
-                if (lt1 > myMax) myMax = lt1;
-            }
-        }
-    }
-
-    #pragma unroll
-    for (int off = 16; off >= 1; off /= 2) {
-        myMin = fminf(myMin, __shfl_xor_sync(0xFFFFFFFF, myMin, off));
-        myMax = fmaxf(myMax, __shfl_xor_sync(0xFFFFFFFF, myMax, off));
-    }
-    const int warpId = tid >> 5;
-    const int laneId = tid & 31;
-    if (laneId == 0) {
-        sharedMin[warpId] = myMin;
-        sharedMax[warpId] = myMax;
-    }
-    __syncthreads();
-    if (tid == 0) {
-        float blockMin = sharedMin[0], blockMax = sharedMax[0];
-        #pragma unroll
-        for (int w = 1; w < NUM_WARPS; ++w) {
-            blockMin = fminf(blockMin, sharedMin[w]);
-            blockMax = fmaxf(blockMax, sharedMax[w]);
-        }
-        tMinOut[tileIdx] = blockMin;
-        tMaxOut[tileIdx] = blockMax;
-    }
-}
-
-// Fine pass for fog volumes: integrates transmittance along the clipped ray.
 __global__ void finePass(const GridT* __restrict__ grid,
                          const float* __restrict__ tMinIn,
                          const float* __restrict__ tMaxIn,
@@ -330,6 +235,7 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
 
     cudaEvent_t e0, e1, e2;
     cudaEventCreate(&e0); cudaEventCreate(&e1); cudaEventCreate(&e2);
+
     float totalCoarse = 0.f, totalFine = 0.f;
     for (int i = 0; i < numIterations; ++i) {
         cudaEventRecord(e0);
@@ -344,39 +250,10 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
         totalCoarse += t01;
         totalFine   += t12;
     }
-
-    const float avgCoarse = totalCoarse / numIterations;
-    const float avgFine   = totalFine   / numIterations;
-    std::cout << "Beam fog tracer (lower coarse) avg ms:"
-              << " coarse=" << avgCoarse
-              << " fine=" << avgFine
-              << " total=" << (avgCoarse + avgFine)
-              << "\n";
-
-    // Upper-only coarse: production path.
-    for (int i = 0; i < 5; ++i) {
-        coarsePassUpperOnly<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
-        finePass<<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, cam, d_image, tilesX, tilesY);
-    }
-    cudaDeviceSynchronize();
-    float totalCoarseU = 0.f, totalFineU = 0.f;
-    for (int i = 0; i < numIterations; ++i) {
-        cudaEventRecord(e0);
-        coarsePassUpperOnly<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
-        cudaEventRecord(e1);
-        finePass<<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, cam, d_image, tilesX, tilesY);
-        cudaEventRecord(e2);
-        cudaEventSynchronize(e2);
-        float t01 = 0.f, t12 = 0.f;
-        cudaEventElapsedTime(&t01, e0, e1);
-        cudaEventElapsedTime(&t12, e1, e2);
-        totalCoarseU += t01;
-        totalFineU   += t12;
-    }
-    std::cout << "Beam fog tracer (upper-only coarse) avg ms:"
-              << " coarse=" << (totalCoarseU / numIterations)
-              << " fine=" << (totalFineU / numIterations)
-              << " total=" << ((totalCoarseU + totalFineU) / numIterations)
+    std::cout << "Beam fog tracer avg ms:"
+              << " coarse=" << (totalCoarse / numIterations)
+              << " fine=" << (totalFine / numIterations)
+              << " total=" << ((totalCoarse + totalFine) / numIterations)
               << "\n";
 
     coarsePass<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
@@ -391,15 +268,10 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
         cudaEventElapsedTime(&t, e0, e1);
         totalFineOnly += t;
     }
-    std::cout << "Beam fog tracer (amortised) fine-only avg ms: " << (totalFineOnly / numIterations) << "\n";
+    std::cout << "Beam fog tracer amortised (fine-only) avg ms: "
+              << (totalFineOnly / numIterations) << "\n";
 
     cudaEventDestroy(e0); cudaEventDestroy(e1); cudaEventDestroy(e2);
-
-    // Re-run the production path (upper-only coarse + fine) so the saved
-    // PFM reflects what we just timed.
-    coarsePassUpperOnly<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
-    finePass<<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, cam, d_image, tilesX, tilesY);
-    cudaDeviceSynchronize();
 
     imageBuffer.deviceDownload();
     saveImage("raytrace_fog_volume-nanovdb-cuda-beam.pfm", width, height, (float*)imageBuffer.data());

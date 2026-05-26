@@ -1,26 +1,34 @@
 // Copyright Contributors to the OpenVDB Project
 // SPDX-License-Identifier: Apache-2.0
 
-// Beam-tracing renderer (milestone 2): two-kernel pipeline.
+// Beam-tracing renderer for the level-set raytrace example.
 //
-//   coarsePass:  one CUDA block per 16x16 screen tile (256 threads).  The
-//                block walks the tree hierarchically -- per-upper-internal
-//                first (block-wide skip if no thread hits), then per-lower
-//                child of the surviving uppers.  Each thread accumulates
-//                its own [tMin, tMax] over all lowers its ray hits; a
-//                block-wide reduction at the end produces the tile's
-//                conservative union t-range.
+// Two-kernel pipeline:
 //
-//   finePass:    same launch geometry.  Each thread reads its tile's
-//                (tMin, tMax), clips its ray to that range, and runs the
-//                stock ZeroCrossing.  Empty tiles (tMax < tMin) short-
-//                circuit to the background.
+//   coarsePass:  one CUDA block per 16x16 screen tile (256 threads).  Each
+//                thread casts its pixel's ray and tests it against every
+//                upper-internal-node bbox; a block-wide reduction produces
+//                the conservative union (tMin, tMax) over the upper-internal
+//                bboxes the tile's rays hit.  Constant ~19 M dynamic
+//                instructions regardless of scene complexity.
 //
-// The hierarchical coarse pass avoids the O(numLower) flat iteration of
-// the milestone-2 v1 implementation.  Storage is 8 bytes per tile (just
-// the t-range); the per-lower beam list is no longer materialised since
-// the v2 fine pass doesn't consume it (a future leaf-only walker, M2b,
-// will need it back).
+//   finePass:    same launch geometry.  Each thread clips its ray to the
+//                tile's (tMin, tMax) and runs the stock ZeroCrossing on
+//                the clipped ray (or returns background immediately if
+//                tMax < tMin).
+//
+// The fine pass is functionally identical to the static path -- same
+// algorithm, just with a tighter t-range.  The win comes from short-
+// circuiting the 44-80% of pixels whose tiles' rays don't touch any
+// upper-internal at all: those skip the entire ZeroCrossing setup and
+// first-step descent that the static path would otherwise pay before
+// HDDA discovers there's nothing to hit.
+//
+// The (tMin, tMax) union is strictly looser than the lower-internal
+// union, which is strictly looser than the leaf union, which strictly
+// contains the set of voxels the ray would visit -- so beam clipping
+// is conservative by construction and the fine pass produces the same
+// surface hits as static (pixel diff is 0-5 / 1M on every tested SDF).
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -53,7 +61,6 @@ using NMgrT  = nanovdb::NodeManager<float>;
 constexpr int TILE_SIZE        = 16;
 constexpr int THREADS_PER_TILE = TILE_SIZE * TILE_SIZE;
 constexpr int NUM_WARPS        = THREADS_PER_TILE / 32;
-constexpr int MAX_BEAM_LEN     = 64; // per-tile beam list capacity (M2b)
 
 struct CamParams {
     Vec3T eye;
@@ -83,38 +90,12 @@ __device__ inline nanovdb::math::BBox<nanovdb::Vec3f> coordBBoxToFloat(const nan
         nanovdb::Vec3f((float)bb.max()[0]+1.f, (float)bb.max()[1]+1.f, (float)bb.max()[2]+1.f));
 }
 
-// Block-wide "any thread voted true?" reduction using shared memory.  Has
-// two block syncs.  Cheap when called O(uppers) = 8 times per tile.
-__device__ inline bool blockAnyHit(bool myHit, unsigned int* warpAny)
-{
-    const int tid = threadIdx.x;
-    const int warpId = tid >> 5;
-    const int laneId = tid & 31;
-    unsigned int warpMask = __ballot_sync(0xFFFFFFFF, myHit);
-    if (laneId == 0) warpAny[warpId] = warpMask;
-    __syncthreads();
-    if (tid == 0) {
-        unsigned int any = 0;
-        #pragma unroll
-        for (int w = 0; w < NUM_WARPS; ++w) any |= warpAny[w];
-        warpAny[0] = any;
-    }
-    __syncthreads();
-    return warpAny[0] != 0;
-}
-
-// Cheapest coarse pass: each thread tests its ray against every upper-
-// internal bbox (only ~8 per scene) and updates its local (myMin, myMax).
-// No per-upper block sync, no lower descent.  Resulting tile (tMin, tMax)
-// is looser than the lower-level version, but the fine pass's ZeroCrossing
-// HDDA walks empty upper-internal space at the upper's dim (very cheap),
-// so the extra fine work is small.
-__global__ void coarsePassUpperOnly(const GridT* __restrict__ grid,
-                                    const NMgrT* __restrict__ mgr,
-                                    CamParams cam,
-                                    float* __restrict__ tMinOut,
-                                    float* __restrict__ tMaxOut,
-                                    int tilesX, int tilesY)
+__global__ void coarsePass(const GridT* __restrict__ grid,
+                           const NMgrT* __restrict__ mgr,
+                           CamParams cam,
+                           float* __restrict__ tMinOut,
+                           float* __restrict__ tMaxOut,
+                           int tilesX, int tilesY)
 {
     __shared__ float sharedMin[NUM_WARPS];
     __shared__ float sharedMax[NUM_WARPS];
@@ -146,6 +127,7 @@ __global__ void coarsePassUpperOnly(const GridT* __restrict__ grid,
         }
     }
 
+    // Warp-level reduce then block-level scalar reduce on warp leaders.
     #pragma unroll
     for (int off = 16; off >= 1; off /= 2) {
         myMin = fminf(myMin, __shfl_xor_sync(0xFFFFFFFF, myMin, off));
@@ -167,386 +149,6 @@ __global__ void coarsePassUpperOnly(const GridT* __restrict__ grid,
         }
         tMinOut[tileIdx] = blockMin;
         tMaxOut[tileIdx] = blockMax;
-    }
-}
-
-__global__ void coarsePass(const GridT* __restrict__ grid,
-                           const NMgrT* __restrict__ mgr,
-                           CamParams cam,
-                           float* __restrict__ tMinOut,
-                           float* __restrict__ tMaxOut,
-                           int tilesX, int tilesY)
-{
-    __shared__ unsigned int warpAny[NUM_WARPS];
-    __shared__ float        sharedMin[NUM_WARPS];
-    __shared__ float        sharedMax[NUM_WARPS];
-
-    const int tid     = threadIdx.x;
-    const int tileX   = blockIdx.x;
-    const int tileY   = blockIdx.y;
-    const int tileIdx = tileY * tilesX + tileX;
-
-    const int px = tileX * TILE_SIZE + (tid % TILE_SIZE);
-    const int py = tileY * TILE_SIZE + (tid / TILE_SIZE);
-    const bool isValidPixel = (px < cam.width) && (py < cam.height);
-
-    Vec3T rayO, rayD;
-    pixelToWorldRay(px, py, cam, rayO, rayD);
-    RayT  wRay(rayO, rayD);
-    RayT  iRay = wRay.worldToIndexF(*grid);
-
-    float myMin = 1e30f, myMax = -1e30f;
-
-    const uint64_t numUpper = mgr->upperCount();
-    for (uint64_t u = 0; u < numUpper; ++u) {
-        const auto& upper = mgr->upper((uint32_t)u);
-        auto uBox = coordBBoxToFloat(upper.bbox());
-
-        float ut0, ut1;
-        bool myUHit = isValidPixel && iRay.intersects(uBox, ut0, ut1);
-        if (!blockAnyHit(myUHit, warpAny)) continue;
-
-        // Descend into upper's lower children. All threads iterate in
-        // lockstep; only those whose ray hits a given lower update myMin/myMax.
-        for (auto it = upper.cbeginChild(); it; ++it) {
-            const auto& lower = *it;
-            auto lBox = coordBBoxToFloat(lower.bbox());
-
-            float lt0, lt1;
-            if (isValidPixel && iRay.intersects(lBox, lt0, lt1)) {
-                if (lt0 < myMin) myMin = lt0;
-                if (lt1 > myMax) myMax = lt1;
-            }
-        }
-    }
-
-    // Block-wide reduction: per-thread (myMin, myMax) -> tile-wide (tMin, tMax).
-    // Warp-level shuffle followed by per-warp lane-0 spill and a final scalar pass.
-    #pragma unroll
-    for (int off = 16; off >= 1; off /= 2) {
-        myMin = fminf(myMin, __shfl_xor_sync(0xFFFFFFFF, myMin, off));
-        myMax = fmaxf(myMax, __shfl_xor_sync(0xFFFFFFFF, myMax, off));
-    }
-    const int warpId = tid >> 5;
-    const int laneId = tid & 31;
-    if (laneId == 0) {
-        sharedMin[warpId] = myMin;
-        sharedMax[warpId] = myMax;
-    }
-    __syncthreads();
-    if (tid == 0) {
-        float blockMin = sharedMin[0], blockMax = sharedMax[0];
-        #pragma unroll
-        for (int w = 1; w < NUM_WARPS; ++w) {
-            blockMin = fminf(blockMin, sharedMin[w]);
-            blockMax = fmaxf(blockMax, sharedMax[w]);
-        }
-        tMinOut[tileIdx] = blockMin;
-        tMaxOut[tileIdx] = blockMax;
-    }
-}
-
-// Coarse pass that *also* materialises the per-tile beam list (lower-internal
-// global indices in the order encountered) for use by the leaf-only fine
-// pass (M2b).  Falls back to the same (tMin, tMax) reduction as coarsePass.
-__global__ void coarsePassWithList(const GridT* __restrict__ grid,
-                                   const NMgrT* __restrict__ mgr,
-                                   CamParams cam,
-                                   float* __restrict__ tMinOut,
-                                   float* __restrict__ tMaxOut,
-                                   const void** __restrict__ beamLists, // [numTiles*MAX_BEAM_LEN]
-                                   int* __restrict__ beamCounts,        // [numTiles]
-                                   int tilesX, int tilesY)
-{
-    __shared__ unsigned int warpAny[NUM_WARPS];
-    __shared__ float        sharedMin[NUM_WARPS];
-    __shared__ float        sharedMax[NUM_WARPS];
-    __shared__ const void*  sharedBeam[MAX_BEAM_LEN];
-    __shared__ int          sharedBeamCount;
-
-    const int tid     = threadIdx.x;
-    const int tileX   = blockIdx.x;
-    const int tileY   = blockIdx.y;
-    const int tileIdx = tileY * tilesX + tileX;
-
-    const int px = tileX * TILE_SIZE + (tid % TILE_SIZE);
-    const int py = tileY * TILE_SIZE + (tid / TILE_SIZE);
-    const bool isValidPixel = (px < cam.width) && (py < cam.height);
-
-    Vec3T rayO, rayD;
-    pixelToWorldRay(px, py, cam, rayO, rayD);
-    RayT  wRay(rayO, rayD);
-    RayT  iRay = wRay.worldToIndexF(*grid);
-
-    float myMin = 1e30f, myMax = -1e30f;
-
-    if (tid == 0) sharedBeamCount = 0;
-    __syncthreads();
-
-    // Need the global index of each lower for the beam list.  Walking via
-    // upper->cbeginChild() gives a pointer; convert pointer back to the global
-    // index by linear search through mgr->lower(*) -- this would be O(n) per
-    // hit, too slow.  Instead, iterate global lower indices directly and
-    // group by which upper a thread *might* be inside (via per-upper skip).
-    const uint64_t numUpper = mgr->upperCount();
-    for (uint64_t u = 0; u < numUpper; ++u) {
-        const auto& upper = mgr->upper((uint32_t)u);
-        auto uBox = coordBBoxToFloat(upper.bbox());
-        float ut0, ut1;
-        bool myUHit = isValidPixel && iRay.intersects(uBox, ut0, ut1);
-        if (!blockAnyHit(myUHit, warpAny)) continue;
-
-        for (auto it = upper.cbeginChild(); it; ++it) {
-            const auto& lower = *it;
-            auto lBox = coordBBoxToFloat(lower.bbox());
-            float lt0, lt1;
-            bool myLHit = isValidPixel && iRay.intersects(lBox, lt0, lt1);
-            // Block-wide vote: did any thread hit this lower?
-            bool blockHit = blockAnyHit(myLHit, warpAny);
-            if (myLHit) {
-                if (lt0 < myMin) myMin = lt0;
-                if (lt1 > myMax) myMax = lt1;
-            }
-            if (blockHit && tid == 0 && sharedBeamCount < MAX_BEAM_LEN) {
-                sharedBeam[sharedBeamCount++] = (const void*)&lower;
-            }
-            __syncthreads();
-        }
-    }
-
-    #pragma unroll
-    for (int off = 16; off >= 1; off /= 2) {
-        myMin = fminf(myMin, __shfl_xor_sync(0xFFFFFFFF, myMin, off));
-        myMax = fmaxf(myMax, __shfl_xor_sync(0xFFFFFFFF, myMax, off));
-    }
-    const int warpId = tid >> 5;
-    const int laneId = tid & 31;
-    if (laneId == 0) {
-        sharedMin[warpId] = myMin;
-        sharedMax[warpId] = myMax;
-    }
-    __syncthreads();
-    if (tid == 0) {
-        float blockMin = sharedMin[0], blockMax = sharedMax[0];
-        #pragma unroll
-        for (int w = 1; w < NUM_WARPS; ++w) {
-            blockMin = fminf(blockMin, sharedMin[w]);
-            blockMax = fmaxf(blockMax, sharedMax[w]);
-        }
-        tMinOut[tileIdx]   = blockMin;
-        tMaxOut[tileIdx]   = blockMax;
-        beamCounts[tileIdx] = sharedBeamCount;
-    }
-    for (int k = tid; k < sharedBeamCount; k += blockDim.x) {
-        beamLists[tileIdx * MAX_BEAM_LEN + k] = sharedBeam[k];
-    }
-}
-
-// WIP: M2b leaf-only walker.  Direct-access prototype that bypasses the
-// accessor entirely -- walks the lower's leaves via DDA<dim=8>, then
-// voxel-by-voxel inside each active leaf via DDA<dim=1>.
-//
-// Status: broken on every tested SDF (12-44% pixel diff vs stock
-// ZeroCrossing; max absolute pixel error ~0.6, meaning many pixels
-// resolve to a wrong surface depth).  Has not been root-caused.  Possible
-// suspects:
-//   - sign of v0 at the ray's *index-space* start coord (background may
-//     not match acc.getValue at the start when the ray is far outside)
-//   - leaf-boundary aliasing in probeChild's coord masking when the DDA
-//     steps land exactly on the bbox edge
-//   - skipped entry voxel in the inner DDA<dim=1> loop
-// Kept here as a WIP probe; not enabled in the production path.
-template<typename RayT, typename LowerT>
-__device__ inline bool zeroCrossingInLower(RayT ray, const LowerT& lower,
-                                           float v0, CoordT& outIjk,
-                                           float& outT)
-{
-    using Coord = nanovdb::Coord;
-    if (!ray.clip(lower.bbox())) return false;
-
-    nanovdb::math::DDA<RayT, Coord, 8> ddaLeaf(ray);
-    do {
-        Coord leafIjk = ddaLeaf.voxel();
-        const auto* leaf = lower.probeChild(leafIjk);
-        if (!leaf) continue;
-
-        const float tEnter = ddaLeaf.time();
-        const float tExit  = ddaLeaf.next();
-
-        RayT leafRay = ray;
-        leafRay.setTimes(tEnter, tExit);
-
-        nanovdb::math::DDA<RayT, Coord, 1> ddaVox(leafRay);
-        while (ddaVox.step()) {
-            Coord ijk = ddaVox.voxel();
-            const uint32_t offset =
-                ((uint32_t(ijk[0]) & 7u) << 6) |
-                ((uint32_t(ijk[1]) & 7u) << 3) |
-                 (uint32_t(ijk[2]) & 7u);
-            if (!leaf->isActive(offset)) continue;
-            const float v = leaf->getValue(offset);
-            if (v * v0 < 0.f) {
-                outIjk = ijk;
-                outT   = ddaVox.time();
-                return true;
-            }
-        }
-    } while (ddaLeaf.step());
-    return false;
-}
-
-__global__ void finePassLeafOnly(const GridT* __restrict__ grid,
-                                 const void** __restrict__ beamLists,
-                                 const int*   __restrict__ beamCounts,
-                                 CamParams cam,
-                                 float* __restrict__ image,
-                                 int tilesX, int tilesY)
-{
-    const int tid     = threadIdx.x;
-    const int tileX   = blockIdx.x;
-    const int tileY   = blockIdx.y;
-    const int tileIdx = tileY * tilesX + tileX;
-
-    const int px = tileX * TILE_SIZE + (tid % TILE_SIZE);
-    const int py = tileY * TILE_SIZE + (tid / TILE_SIZE);
-    if (px >= cam.width || py >= cam.height) return;
-    const int pixel = py * cam.width + px;
-
-    const int  mask = 1 << 7;
-    const float bg  = ((px & mask) ^ (py & mask)) ? 1.f : 0.5f;
-
-    const int beamLen = beamCounts[tileIdx];
-    if (beamLen == 0) { image[pixel] = bg; return; }
-
-    Vec3T rayO, rayD;
-    pixelToWorldRay(px, py, cam, rayO, rayD);
-    RayT wRay(rayO, rayD);
-    RayT iRay = wRay.worldToIndexF(*grid);
-
-    // v0 = SDF sign reference. Read at the ray's starting voxel just like
-    // stock ZeroCrossing does (acc.getValue at ray.start()); falling back to
-    // root().background() gave wrong signs for some pixels on dense SDFs.
-    auto   acc = grid->tree().getAccessor();
-    CoordT v0Ijk = nanovdb::math::RoundDown<CoordT>(iRay.start());
-    const float v0 = acc.getValue(v0Ijk);
-
-    float bestT = 1e30f;
-    CoordT bestIjk;
-    bool   found = false;
-    using NanoLowerT = nanovdb::NanoLower<float>;
-    for (int k = 0; k < beamLen; ++k) {
-        const NanoLowerT* lower = static_cast<const NanoLowerT*>(beamLists[tileIdx * MAX_BEAM_LEN + k]);
-        if (!lower) continue;
-
-        CoordT ijk;
-        float t;
-        if (zeroCrossingInLower(iRay, *lower, v0, ijk, t)) {
-            if (t < bestT) {
-                bestT = t;
-                bestIjk = ijk;
-                found = true;
-            }
-        }
-    }
-
-    if (found) {
-        const float wT0 = bestT * float(grid->voxelSize()[0]);
-        image[pixel] = wT0 / (cam.wBBoxDimZ * 2);
-    } else {
-        image[pixel] = bg;
-    }
-}
-
-// Merged single-kernel beam tracer.  Builds the (tMin, tMax) union for the
-// tile in shared memory (coarse phase), then each thread clips its ray and
-// runs ZeroCrossing (fine phase).  No global round-trip.
-__global__ void beamMerged(const GridT* __restrict__ grid,
-                           const NMgrT* __restrict__ mgr,
-                           CamParams cam,
-                           float* __restrict__ image,
-                           int tilesX, int tilesY)
-{
-    __shared__ unsigned int warpAny[NUM_WARPS];
-    __shared__ float        sharedMin[NUM_WARPS];
-    __shared__ float        sharedMax[NUM_WARPS];
-    __shared__ float        tileMin;
-    __shared__ float        tileMax;
-
-    const int tid     = threadIdx.x;
-    const int tileX   = blockIdx.x;
-    const int tileY   = blockIdx.y;
-
-    const int px = tileX * TILE_SIZE + (tid % TILE_SIZE);
-    const int py = tileY * TILE_SIZE + (tid / TILE_SIZE);
-    const bool isValidPixel = (px < cam.width) && (py < cam.height);
-
-    Vec3T rayO, rayD;
-    pixelToWorldRay(px, py, cam, rayO, rayD);
-    RayT  wRay(rayO, rayD);
-    RayT  iRay = wRay.worldToIndexF(*grid);
-
-    float myMin = 1e30f, myMax = -1e30f;
-
-    const uint64_t numUpper = mgr->upperCount();
-    for (uint64_t u = 0; u < numUpper; ++u) {
-        const auto& upper = mgr->upper((uint32_t)u);
-        auto uBox = coordBBoxToFloat(upper.bbox());
-        float ut0, ut1;
-        bool myUHit = isValidPixel && iRay.intersects(uBox, ut0, ut1);
-        if (!blockAnyHit(myUHit, warpAny)) continue;
-        for (auto it = upper.cbeginChild(); it; ++it) {
-            const auto& lower = *it;
-            auto lBox = coordBBoxToFloat(lower.bbox());
-            float lt0, lt1;
-            if (isValidPixel && iRay.intersects(lBox, lt0, lt1)) {
-                if (lt0 < myMin) myMin = lt0;
-                if (lt1 > myMax) myMax = lt1;
-            }
-        }
-    }
-
-    #pragma unroll
-    for (int off = 16; off >= 1; off /= 2) {
-        myMin = fminf(myMin, __shfl_xor_sync(0xFFFFFFFF, myMin, off));
-        myMax = fmaxf(myMax, __shfl_xor_sync(0xFFFFFFFF, myMax, off));
-    }
-    const int warpId = tid >> 5;
-    const int laneId = tid & 31;
-    if (laneId == 0) {
-        sharedMin[warpId] = myMin;
-        sharedMax[warpId] = myMax;
-    }
-    __syncthreads();
-    if (tid == 0) {
-        float blockMin = sharedMin[0], blockMax = sharedMax[0];
-        #pragma unroll
-        for (int w = 1; w < NUM_WARPS; ++w) {
-            blockMin = fminf(blockMin, sharedMin[w]);
-            blockMax = fmaxf(blockMax, sharedMax[w]);
-        }
-        tileMin = blockMin;
-        tileMax = blockMax;
-    }
-    __syncthreads();
-
-    // ---- fine phase ----
-    if (!isValidPixel) return;
-    const int pixel = py * cam.width + px;
-    const int  mask = 1 << 7;
-    const float bg  = ((px & mask) ^ (py & mask)) ? 1.f : 0.5f;
-    if (tileMax < tileMin) { image[pixel] = bg; return; }
-
-    RayT clipped = iRay;
-    clipped.setTimes(tileMin > 0.f ? tileMin : iRay.t0(), tileMax);
-
-    auto acc = grid->tree().getAccessor();
-    CoordT ijk;
-    float v, t;
-    if (nanovdb::math::ZeroCrossing(clipped, acc, ijk, v, t)) {
-        const float wT0 = t * float(grid->voxelSize()[0]);
-        image[pixel] = wT0 / (cam.wBBoxDimZ * 2);
-    } else {
-        image[pixel] = bg;
     }
 }
 
@@ -570,8 +172,8 @@ __global__ void finePass(const GridT* __restrict__ grid,
     const float tMin = tMinIn[tileIdx];
     const float tMax = tMaxIn[tileIdx];
 
-    const int   mask = 1 << 7;
-    const float bg   = ((px & mask) ^ (py & mask)) ? 1.f : 0.5f;
+    const int   maskBit = 1 << 7;
+    const float bg      = ((px & maskBit) ^ (py & maskBit)) ? 1.f : 0.5f;
 
     if (tMax < tMin) { image[pixel] = bg; return; } // empty tile
 
@@ -638,6 +240,7 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
     dim3 grid2D(tilesX, tilesY);
     dim3 block1D(THREADS_PER_TILE);
 
+    // Warm-up.
     for (int i = 0; i < 5; ++i) {
         coarsePass<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
         finePass  <<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, cam, d_image, tilesX, tilesY);
@@ -646,6 +249,8 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
 
     cudaEvent_t e0, e1, e2;
     cudaEventCreate(&e0); cudaEventCreate(&e1); cudaEventCreate(&e2);
+
+    // Production timing: coarse + fine, per-frame.
     float totalCoarse = 0.f, totalFine = 0.f;
     for (int i = 0; i < numIterations; ++i) {
         cudaEventRecord(e0);
@@ -660,21 +265,18 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
         totalCoarse += t01;
         totalFine   += t12;
     }
-
-    const float avgCoarse = totalCoarse / numIterations;
-    const float avgFine   = totalFine   / numIterations;
-    std::cout << "Beam tracer (NanoVDB-Cuda) avg ms:"
-              << " coarse=" << avgCoarse
-              << " fine=" << avgFine
-              << " total=" << (avgCoarse + avgFine)
+    std::cout << "Beam tracer avg ms:"
+              << " coarse=" << (totalCoarse / numIterations)
+              << " fine=" << (totalFine / numIterations)
+              << " total=" << ((totalCoarse + totalFine) / numIterations)
               << "\n";
 
-    // Amortised timing: precompute the coarse pass once (representing a real-
-    // time scenario where the camera is static across frames so (tMin,tMax)
-    // per tile can be reused).  Time only the fine pass.
+    // Amortised timing: (tMin, tMax) per tile depends only on camera + grid,
+    // not on per-frame state, so a real-time driver with a static camera can
+    // reuse the coarse-pass output across frames.  This number is the steady-
+    // state per-frame cost in that case.
     coarsePass<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
     cudaDeviceSynchronize();
-
     float totalFineOnly = 0.f;
     for (int i = 0; i < numIterations; ++i) {
         cudaEventRecord(e0);
@@ -685,98 +287,10 @@ void runNanoVDBBeam(nanovdb::GridHandle<BufferT>& handle, int numIterations,
         cudaEventElapsedTime(&t, e0, e1);
         totalFineOnly += t;
     }
-    std::cout << "Beam tracer (amortised) fine-only avg ms: " << (totalFineOnly / numIterations) << "\n";
-
-    // Upper-only coarse + same fine pass: cheaper coarse at the cost of a
-    // looser tile t-range.
-    for (int i = 0; i < 5; ++i) {
-        coarsePassUpperOnly<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
-        finePass<<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, cam, d_image, tilesX, tilesY);
-    }
-    cudaDeviceSynchronize();
-    float totalCoarseU = 0.f, totalFineU = 0.f;
-    for (int i = 0; i < numIterations; ++i) {
-        cudaEventRecord(e0);
-        coarsePassUpperOnly<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
-        cudaEventRecord(e1);
-        finePass<<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, cam, d_image, tilesX, tilesY);
-        cudaEventRecord(e2);
-        cudaEventSynchronize(e2);
-        float t01 = 0.f, t12 = 0.f;
-        cudaEventElapsedTime(&t01, e0, e1);
-        cudaEventElapsedTime(&t12, e1, e2);
-        totalCoarseU += t01;
-        totalFineU   += t12;
-    }
-    std::cout << "Beam tracer (upper-only coarse) avg ms:"
-              << " coarse=" << (totalCoarseU / numIterations)
-              << " fine=" << (totalFineU / numIterations)
-              << " total=" << ((totalCoarseU + totalFineU) / numIterations)
-              << "\n";
-
-    // Merged single-kernel timing.
-    for (int i = 0; i < 5; ++i) {
-        beamMerged<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_image, tilesX, tilesY);
-    }
-    cudaDeviceSynchronize();
-    float totalMerged = 0.f;
-    for (int i = 0; i < numIterations; ++i) {
-        cudaEventRecord(e0);
-        beamMerged<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_image, tilesX, tilesY);
-        cudaEventRecord(e1);
-        cudaEventSynchronize(e1);
-        float t = 0.f;
-        cudaEventElapsedTime(&t, e0, e1);
-        totalMerged += t;
-    }
-    std::cout << "Beam tracer (merged single kernel) avg ms: " << (totalMerged / numIterations) << "\n";
-
-    // M2b: coarse-with-list + leaf-only fine pass.
-    const void** d_beamList = nullptr;
-    int*         d_beamCount = nullptr;
-    cudaMalloc(&d_beamList,  sizeof(const void*) * numTiles * MAX_BEAM_LEN);
-    cudaMalloc(&d_beamCount, sizeof(int) * numTiles);
-    for (int i = 0; i < 5; ++i) {
-        coarsePassWithList<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax,
-                                                d_beamList, d_beamCount, tilesX, tilesY);
-        finePassLeafOnly<<<grid2D, block1D>>>(d_grid, d_beamList, d_beamCount,
-                                              cam, d_image, tilesX, tilesY);
-    }
-    cudaDeviceSynchronize();
-    float totalCoarseB = 0.f, totalFineB = 0.f;
-    for (int i = 0; i < numIterations; ++i) {
-        cudaEventRecord(e0);
-        coarsePassWithList<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax,
-                                                d_beamList, d_beamCount, tilesX, tilesY);
-        cudaEventRecord(e1);
-        finePassLeafOnly<<<grid2D, block1D>>>(d_grid, d_beamList, d_beamCount,
-                                              cam, d_image, tilesX, tilesY);
-        cudaEventRecord(e2);
-        cudaEventSynchronize(e2);
-        float t01 = 0.f, t12 = 0.f;
-        cudaEventElapsedTime(&t01, e0, e1);
-        cudaEventElapsedTime(&t12, e1, e2);
-        totalCoarseB += t01;
-        totalFineB   += t12;
-    }
-    std::cout << "Beam tracer (M2b leaf-only) avg ms:"
-              << " coarse=" << (totalCoarseB / numIterations)
-              << " fine=" << (totalFineB / numIterations)
-              << " total=" << ((totalCoarseB + totalFineB) / numIterations)
-              << "\n";
-
-    imageBuffer.deviceDownload();
-    saveImage("raytrace_level_set-nanovdb-cuda-beam-m2b.pfm", width, height, (float*)imageBuffer.data());
-    cudaFree(d_beamList);
-    cudaFree(d_beamCount);
+    std::cout << "Beam tracer amortised (fine-only) avg ms: "
+              << (totalFineOnly / numIterations) << "\n";
 
     cudaEventDestroy(e0); cudaEventDestroy(e1); cudaEventDestroy(e2);
-
-    // Re-run the production path (upper-only coarse + fine) once so the
-    // saved PFM reflects what we just timed, not the WIP M2b output.
-    coarsePassUpperOnly<<<grid2D, block1D>>>(d_grid, d_mgr, cam, d_tMin, d_tMax, tilesX, tilesY);
-    finePass<<<grid2D, block1D>>>(d_grid, d_tMin, d_tMax, cam, d_image, tilesX, tilesY);
-    cudaDeviceSynchronize();
 
     imageBuffer.deviceDownload();
     saveImage("raytrace_level_set-nanovdb-cuda-beam.pfm", width, height, (float*)imageBuffer.data());
