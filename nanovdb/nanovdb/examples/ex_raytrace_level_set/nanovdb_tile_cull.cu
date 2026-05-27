@@ -89,10 +89,7 @@ __global__ void renderKernel(const GridT* __restrict__        grid,
     //
     // Each thread does numUpper (~8) slab tests; bbox reads are broadcast
     // across the block so the L1 sees identical cache lines from every
-    // thread (cheap).  This replaces what was previously a separate
-    // block-cooperative coarse-pass kernel; merging keeps the saved
-    // (tMin, tMax) entirely in registers and removes the global-memory
-    // round-trip and the second kernel launch.
+    // thread (cheap).
     float tMin = 1e30f, tMax = -1e30f;
     const uint64_t numUpper = mgr->upperCount();
     for (uint64_t u = 0; u < numUpper; ++u) {
