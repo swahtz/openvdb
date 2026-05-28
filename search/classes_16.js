@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['wenostencil',['WenoStencil',['../classopenvdb_1_1v9__0_1_1math_1_1WenoStencil.html',1,'openvdb::v9_0::math']]],
-  ['wenostencil',['WenoStencil',['../classnanovdb_1_1WenoStencil.html',1,'nanovdb']]]
+  ['wenostencil_0',['WenoStencil',['../classopenvdb_1_1v13__0_1_1math_1_1WenoStencil.html',1,'openvdb::v13_0::math']]],
+  ['wenostencil_3c_20gridt_2c_20issafe_20_3e_1',['WenoStencil&lt; GridT, IsSafe &gt;',['../classopenvdb_1_1v13__0_1_1math_1_1WenoStencil.html',1,'openvdb::v13_0::math']]]
 ];

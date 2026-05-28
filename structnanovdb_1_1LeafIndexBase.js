@@ -1,0 +1,27 @@
+var structnanovdb_1_1LeafIndexBase =
+[
+    [ "ArrayType", "structnanovdb_1_1LeafIndexBase.html#af1a7c06ec1f80ed7748ce61023e84489", null ],
+    [ "FloatType", "structnanovdb_1_1LeafIndexBase.html#a491ff8aed2f4fb47d806d5e4c3bc6edc", null ],
+    [ "ValueType", "structnanovdb_1_1LeafIndexBase.html#a42ef5b9e3bda59f74792879a259df620", null ],
+    [ "LeafIndexBase", "structnanovdb_1_1LeafIndexBase.html#abe0054803948d9d250c28fac9babe046", null ],
+    [ "LeafIndexBase", "structnanovdb_1_1LeafIndexBase.html#a7eefa7f57e93fd50c31e9d01779f7808", null ],
+    [ "~LeafIndexBase", "structnanovdb_1_1LeafIndexBase.html#a64e9bfc168c5fcd743d0cf583594fb66", null ],
+    [ "firstOffset", "structnanovdb_1_1LeafIndexBase.html#a85d2fe5d62deb9f8bda07f10a9c1a24d", null ],
+    [ "hasStats", "structnanovdb_1_1LeafIndexBase.html#af1c2bc7bb5f8a1c8920745d3a12d7df7", null ],
+    [ "memUsage", "structnanovdb_1_1LeafIndexBase.html#abdbf948e7b299b032f08cc4591b5d974", null ],
+    [ "operator=", "structnanovdb_1_1LeafIndexBase.html#a755684b47bad8366d007f7ab5e32bc57", null ],
+    [ "padding", "structnanovdb_1_1LeafIndexBase.html#a885bc3eda95d14f11aa2a9ad0e521582", null ],
+    [ "setAvg", "structnanovdb_1_1LeafIndexBase.html#ab7ddf47345564a7ea064987ea4149a92", null ],
+    [ "setDev", "structnanovdb_1_1LeafIndexBase.html#a59a796d26dbe9bef11b2db4d45a800b1", null ],
+    [ "setMax", "structnanovdb_1_1LeafIndexBase.html#a4c04aed00b68fb6149e630fda9a3bbc1", null ],
+    [ "setMin", "structnanovdb_1_1LeafIndexBase.html#ac72dbbec51826911663669cf8cc3cd11", null ],
+    [ "setOn", "structnanovdb_1_1LeafIndexBase.html#a52991ea12190ad4df50cc29a237f9f29", null ],
+    [ "setOrigin", "structnanovdb_1_1LeafIndexBase.html#a000298b28e29ef44df2686dc2f384d4f", null ],
+    [ "FIXED_SIZE", "structnanovdb_1_1LeafIndexBase.html#a17e684702cf41406fe05663e7aa7c8a6", null ],
+    [ "mBBoxDif", "structnanovdb_1_1LeafIndexBase.html#a8c701f7c839ee80047597decc435e3e7", null ],
+    [ "mBBoxMin", "structnanovdb_1_1LeafIndexBase.html#a8805b0e4d63f1a91817b11af39939ac6", null ],
+    [ "mFlags", "structnanovdb_1_1LeafIndexBase.html#a51fb244e2361235b2287e9d140c4062d", null ],
+    [ "mOffset", "structnanovdb_1_1LeafIndexBase.html#a160b12e2ad269fd39754312a17a489f6", null ],
+    [ "mPrefixSum", "structnanovdb_1_1LeafIndexBase.html#a73ea98e7e235f7cb3eed470ce90186d3", null ],
+    [ "mValueMask", "structnanovdb_1_1LeafIndexBase.html#a7d720707b9612576f10deb75d00918b8", null ]
+];
