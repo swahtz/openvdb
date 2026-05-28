@@ -1,0 +1,55 @@
+
+name: Docs Fork Preview
+
+# Builds the doxygen docs and publishes them to a gh-pages branch on the
+# same fork, so a contributor can preview the rendered HTML at
+# https://<user>.github.io/openvdb/ without needing the upstream
+# openvdb-website deploy key. The job is gated to non-AcademySoftwareFoundation
+# repos so it never runs on upstream (the existing docs.yml handles that).
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'docs_qol_improvements_deploy'
+
+concurrency:
+  group: docs-fork-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_and_deploy:
+    if: github.repository_owner != 'AcademySoftwareFoundation'
+    runs-on: ubuntu-latest
+    container:
+      image: aswf/ci-openvdb:2026
+    env:
+      CXX: g++
+    steps:
+    - uses: actions/checkout@v4
+    - name: install_doxygen
+      run: ./ci/install_doxygen.sh 1_14_0
+    - name: nanobind
+      run: ./ci/install_nanobind.sh 2.5.0
+    - name: build
+      run: >
+        ./ci/build.sh -v
+        --build-type=Release
+        --components="core,python,doc"
+        --cargs=\"
+        -DUSE_BLOSC=OFF
+        -DOPENVDB_CORE_STATIC=OFF
+        -DOPENVDB_PYTHON_WRAP_ALL_GRID_TYPES=ON
+        -DUSE_EXPLICIT_INSTANTIATION=OFF
+        -DDISABLE_DEPENDENCY_VERSION_CHECKS=ON
+        \"
+    - name: deploy
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: /usr/local/share/doc/OpenVDB/html
+        publish_branch: gh-pages
+        # Uncomment to publish each branch under its own subdirectory
+        # (e.g. https://<user>.github.io/openvdb/docs_qol_improvements/):
+        # destination_dir: ${{ github.ref_name }}
+        full_commit_message: "Doxygen preview build from ${{ github.ref_name }} @ ${{ github.sha }}"
