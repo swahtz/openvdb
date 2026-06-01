@@ -1,9 +1,8 @@
 var annotated_dup =
 [
-    [ "cxx14", "namespacecxx14.html", [
-      [ "index_sequence", "structcxx14_1_1index__sequence.html", null ],
-      [ "make_index_sequence", "structcxx14_1_1make__index__sequence.html", null ],
-      [ "make_index_sequence< 0, Is... >", "structcxx14_1_1make__index__sequence_3_010_00_01Is_8_8_8_01_4.html", null ]
+    [ "GU_VDBPointToolsInternal", "namespaceGU__VDBPointToolsInternal.html", [
+      [ "IndexToOffsetOp", "structGU__VDBPointToolsInternal_1_1IndexToOffsetOp.html", "structGU__VDBPointToolsInternal_1_1IndexToOffsetOp" ],
+      [ "PackedMaskConstructor", "structGU__VDBPointToolsInternal_1_1PackedMaskConstructor.html", "structGU__VDBPointToolsInternal_1_1PackedMaskConstructor" ]
     ] ],
     [ "houdini_utils", "namespacehoudini__utils.html", [
       [ "OpFactory", "classhoudini__utils_1_1OpFactory.html", "classhoudini__utils_1_1OpFactory" ],
@@ -101,6 +100,8 @@ var annotated_dup =
       [ "GridTree< const GridT >", "structnanovdb_1_1GridTree_3_01const_01GridT_01_4.html", "structnanovdb_1_1GridTree_3_01const_01GridT_01_4" ],
       [ "Half", "classnanovdb_1_1Half.html", null ],
       [ "HostBuffer", "classnanovdb_1_1HostBuffer.html", "classnanovdb_1_1HostBuffer" ],
+      [ "InternalData", "structnanovdb_1_1InternalData.html", "structnanovdb_1_1InternalData" ],
+      [ "InternalNode", "classnanovdb_1_1InternalNode.html", "classnanovdb_1_1InternalNode" ],
       [ "LeafData", "structnanovdb_1_1LeafData.html", "structnanovdb_1_1LeafData" ],
       [ "LeafData< bool, CoordT, MaskT, LOG2DIM >", "structnanovdb_1_1LeafData_3_01bool_00_01CoordT_00_01MaskT_00_01LOG2DIM_01_4.html", "structnanovdb_1_1LeafData_3_01bool_00_01CoordT_00_01MaskT_00_01LOG2DIM_01_4" ],
       [ "LeafData< Fp16, CoordT, MaskT, LOG2DIM >", "structnanovdb_1_1LeafData_3_01Fp16_00_01CoordT_00_01MaskT_00_01LOG2DIM_01_4.html", "structnanovdb_1_1LeafData_3_01Fp16_00_01CoordT_00_01MaskT_00_01LOG2DIM_01_4" ],
@@ -772,6 +773,7 @@ var annotated_dup =
           [ "DynamicNodeManager", "classopenvdb_1_1v13__0_1_1tree_1_1DynamicNodeManager.html", "classopenvdb_1_1v13__0_1_1tree_1_1DynamicNodeManager" ],
           [ "DynamicNodeManagerLink", "classopenvdb_1_1v13__0_1_1tree_1_1DynamicNodeManagerLink.html", "classopenvdb_1_1v13__0_1_1tree_1_1DynamicNodeManagerLink" ],
           [ "ForeachFilterOp", "structopenvdb_1_1v13__0_1_1tree_1_1ForeachFilterOp.html", "structopenvdb_1_1v13__0_1_1tree_1_1ForeachFilterOp" ],
+          [ "InternalNode", "classopenvdb_1_1v13__0_1_1tree_1_1InternalNode.html", "classopenvdb_1_1v13__0_1_1tree_1_1InternalNode" ],
           [ "IteratorBase", "classopenvdb_1_1v13__0_1_1tree_1_1IteratorBase.html", "classopenvdb_1_1v13__0_1_1tree_1_1IteratorBase" ],
           [ "IteratorRange", "classopenvdb_1_1v13__0_1_1tree_1_1IteratorRange.html", "classopenvdb_1_1v13__0_1_1tree_1_1IteratorRange" ],
           [ "IterListItem", "classopenvdb_1_1v13__0_1_1tree_1_1IterListItem.html", "classopenvdb_1_1v13__0_1_1tree_1_1IterListItem" ],
@@ -812,6 +814,8 @@ var annotated_dup =
           [ "RootNodeCombineHelper< CombineOp, RootT, OtherRootT, true >", "structopenvdb_1_1v13__0_1_1tree_1_1RootNodeCombineHelper_3_01CombineOp_00_01RootT_00_01OtherRootT_00_01true_01_4.html", "structopenvdb_1_1v13__0_1_1tree_1_1RootNodeCombineHelper_3_01CombineOp_00_01RootT_00_01OtherRootT_00_01true_01_4" ],
           [ "RootNodeCopyHelper", "structopenvdb_1_1v13__0_1_1tree_1_1RootNodeCopyHelper.html", "structopenvdb_1_1v13__0_1_1tree_1_1RootNodeCopyHelper" ],
           [ "RootNodeCopyHelper< RootT, OtherRootT, true >", "structopenvdb_1_1v13__0_1_1tree_1_1RootNodeCopyHelper_3_01RootT_00_01OtherRootT_00_01true_01_4.html", "structopenvdb_1_1v13__0_1_1tree_1_1RootNodeCopyHelper_3_01RootT_00_01OtherRootT_00_01true_01_4" ],
+          [ "SameInternalConfig", "structopenvdb_1_1v13__0_1_1tree_1_1SameInternalConfig.html", "structopenvdb_1_1v13__0_1_1tree_1_1SameInternalConfig" ],
+          [ "SameInternalConfig< ChildT1, Dim1, InternalNode< ChildT2, Dim1 > >", "structopenvdb_1_1v13__0_1_1tree_1_1SameInternalConfig_3_01ChildT1_00_01Dim1_00_01InternalNode_3_01ChildT2_00_01Dim1_01_4_01_4.html", "structopenvdb_1_1v13__0_1_1tree_1_1SameInternalConfig_3_01ChildT1_00_01Dim1_00_01InternalNode_3_01ChildT2_00_01Dim1_01_4_01_4" ],
           [ "SameLeafConfig", "structopenvdb_1_1v13__0_1_1tree_1_1SameLeafConfig.html", "structopenvdb_1_1v13__0_1_1tree_1_1SameLeafConfig" ],
           [ "SameLeafConfig< Dim1, LeafNode< T2, Dim1 > >", "structopenvdb_1_1v13__0_1_1tree_1_1SameLeafConfig_3_01Dim1_00_01LeafNode_3_01T2_00_01Dim1_01_4_01_4.html", "structopenvdb_1_1v13__0_1_1tree_1_1SameLeafConfig_3_01Dim1_00_01LeafNode_3_01T2_00_01Dim1_01_4_01_4" ],
           [ "SameLeafConfig< Dim1, openvdb::tools::PointIndexLeafNode< T2, Dim1 > >", "structopenvdb_1_1v13__0_1_1tree_1_1SameLeafConfig_3_01Dim1_00_01openvdb_1_1tools_1_1PointIndexLe41cd311c80d4680c95c6356200b891f8.html", "structopenvdb_1_1v13__0_1_1tree_1_1SameLeafConfig_3_01Dim1_00_01openvdb_1_1tools_1_1PointIndexLe41cd311c80d4680c95c6356200b891f8" ],
@@ -1020,8 +1024,6 @@ var annotated_dup =
     [ "CompositeOp", "structCompositeOp.html", "structCompositeOp" ],
     [ "FilterType", "interfaceFilterType.html", null ],
     [ "GU_VDBPointList", "structGU__VDBPointList.html", "structGU__VDBPointList" ],
-    [ "half", "classhalf.html", "classhalf" ],
-    [ "imath_half_uif", "unionimath__half__uif.html", "unionimath__half__uif" ],
     [ "MeshDataAdapter", "interfaceMeshDataAdapter.html", null ],
     [ "ParticleArray", "interfaceParticleArray.html", null ],
     [ "pnanovdb_grid_handle_t", "structpnanovdb__grid__handle__t.html", "structpnanovdb__grid__handle__t" ],

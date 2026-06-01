@@ -15,7 +15,7 @@ var searchData=
   ['zeroval_3c_20math_3a_3aquatd_20_3e_12',['zeroVal&lt; math::Quatd &gt;',['../namespaceopenvdb_1_1v13__0.html#a79f5f6bb3d4a9fd1bac954a09d01a164',1,'openvdb::v13_0']]],
   ['zeroval_3c_20math_3a_3aquats_20_3e_13',['zeroVal&lt; math::Quats &gt;',['../namespaceopenvdb_1_1v13__0.html#af68ebe6c8f26ce7b17147714402ca3a0',1,'openvdb::v13_0']]],
   ['zeroval_3c_20std_3a_3astring_20_3e_14',['zeroVal&lt; std::string &gt;',['../namespaceopenvdb_1_1v13__0.html#a27b294020e4e771032ec610f26003eb1',1,'openvdb::v13_0']]],
-  ['ziptostream_15',['zipToStream',['../namespaceopenvdb_1_1v13__0_1_1io.html#a326dc4ab84b17fd824b83711a359c934',1,'openvdb::v13_0::io']]],
-  ['ziptostreamsize_16',['zipToStreamSize',['../namespaceopenvdb_1_1v13__0_1_1io.html#a0650b3bc51a2928e265d40133905caf9',1,'openvdb::v13_0::io']]],
+  ['ziptostream_15',['zipToStream',['../namespaceopenvdb_1_1v13__0_1_1io.html#aeabd96a7691e4953f88a55f65a1e6f0d',1,'openvdb::v13_0::io']]],
+  ['ziptostreamsize_16',['zipToStreamSize',['../namespaceopenvdb_1_1v13__0_1_1io.html#a5bcb7a160a393d71c9e368ec915a5db6',1,'openvdb::v13_0::io']]],
   ['zstride_17',['zStride',['../classopenvdb_1_1v13__0_1_1tools_1_1DenseBase_3_01ValueT_00_01LayoutZYX_01_4.html#a9ea37fee356b1ab8767b2cccb3d7ed7b',1,'openvdb::v13_0::tools::DenseBase&lt; ValueT, LayoutZYX &gt;::zStride()'],['../classopenvdb_1_1v13__0_1_1tools_1_1DenseBase_3_01ValueT_00_01LayoutXYZ_01_4.html#aafce5be668d8b44f0f33df36dbfd49cf',1,'openvdb::v13_0::tools::DenseBase&lt; ValueT, LayoutXYZ &gt;::zStride()']]]
 ];

@@ -28,6 +28,7 @@ var classhoudini__utils_1_1OpFactory =
     [ "operator=", "classhoudini__utils_1_1OpFactory.html#abb7ab2574ddd42ec52979181f37565ed", null ],
     [ "setDocumentation", "classhoudini__utils_1_1OpFactory.html#a45b988c310c65efd119f6c23ee0d98ff", null ],
     [ "setFlags", "classhoudini__utils_1_1OpFactory.html#a9354fbe92b41263488b2fffc58a82c7f", null ],
+    [ "setInternalName", "classhoudini__utils_1_1OpFactory.html#afcc2d15869c6149b30b9b8c09b17f101", null ],
     [ "setInvisible", "classhoudini__utils_1_1OpFactory.html#aaf96c2bddcfc0636d11169fac801a479", null ],
     [ "setLocalVariables", "classhoudini__utils_1_1OpFactory.html#a290540ab422fb750c8520fa0d0296f0c", null ],
     [ "setMaxInputs", "classhoudini__utils_1_1OpFactory.html#a1251c37b1eeaf874a05517bd5b3ed4af", null ],

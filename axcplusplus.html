@@ -384,7 +384,7 @@ OpenVDB / OpenVDB AX Types</h1>
 </div><!-- fragment --> </dd></dl>
 <dl class="section user"><dt></dt><dd>Now lets assume that a notion of four <span class="tt">int32</span> values is not supported for serialization of OpenVDB points or volumes (we assume the type can at least be instantiated). Whilst this code may execute, serializing this data to disk may fail due to unregistered OpenVDB types. AX does <b>not</b> register any additional OpenVDB types. This choice is left to downstream software. In this example, to allow for serialization of <span class="tt">vec4</span> types, some variant of the following can be implemented in your application. </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The choice to register Grid types in OpenVDB is left to the OpenVDB maintainers. There are important consequences to registering custom types - other default installations of OpenVDB <b>will not be able to read your files</b> unless compiled with similar instantiations. </dd></dl>
-<dl class="section user"><dt></dt><dd><div class="fragment"><div class="line"><a class="code hl_function" href="namespaceopenvdb_1_1v13__0.html#a5fb8281b837e5b8a3883fa2c097018c1">openvdb::initialize</a>(); <span class="comment">// standard init of vdb</span></div>
+<dl class="section user"><dt></dt><dd><div class="fragment"><div class="line"><a class="code hl_function" href="namespaceopenvdb_1_1v13__0.html#a25a40b6614565f755233080a384c35f1">openvdb::initialize</a>(); <span class="comment">// standard init of vdb</span></div>
 <div class="line">openvdb::ax::initialize(); <span class="comment">// standard init of ax</span></div>
 <div class="line"><span class="comment">// Define a Vec4I grid type from the openvdb::math::Vec4&lt;int32_t&gt; class.</span></div>
 <div class="line"><span class="comment">// Use a ValueConverter to ensure the grid has the same configuration as</span></div>
@@ -392,7 +392,7 @@ OpenVDB / OpenVDB AX Types</h1>
 <div class="line"><span class="keyword">using </span>Vec4IGrid = openvdb::BoolGrid::ValueConverter&lt;openvdb::Vec4I&gt;::Type;</div>
 <div class="line"><span class="comment">// register this type</span></div>
 <div class="line">Vec4IGrid::registerGrid();</div>
-<div class="ttc" id="anamespaceopenvdb_1_1v13__0_html_a5fb8281b837e5b8a3883fa2c097018c1"><div class="ttname"><a href="namespaceopenvdb_1_1v13__0.html#a5fb8281b837e5b8a3883fa2c097018c1">openvdb::v13_0::initialize</a></div><div class="ttdeci">OPENVDB_IMPORT void initialize()</div><div class="ttdoc">Global registration of native Grid, Transform, Metadata and Point attribute types....</div></div>
+<div class="ttc" id="anamespaceopenvdb_1_1v13__0_html_a25a40b6614565f755233080a384c35f1"><div class="ttname"><a href="namespaceopenvdb_1_1v13__0.html#a25a40b6614565f755233080a384c35f1">openvdb::v13_0::initialize</a></div><div class="ttdeci">void initialize()</div><div class="ttdoc">Global registration of native Grid, Transform, Metadata and Point attribute types....</div></div>
 </div><!-- fragment --></dd></dl>
 <hr  />
  </div></div><!-- contents -->

@@ -54,6 +54,6 @@ var openvdb_8h =
     [ "openvdb::v13_0::Vec3TreeTypes", "namespaceopenvdb_1_1v13__0.html#a5fde01c549f5fbf4b18ce60c1810c985", null ],
     [ "openvdb::v13_0::VectorGrid", "namespaceopenvdb_1_1v13__0.html#a34f04b5087af8e271f07c3665c9593b7", null ],
     [ "openvdb::v13_0::VectorTree", "namespaceopenvdb_1_1v13__0.html#a8808a8156381f36a2cbf6799698dee23", null ],
-    [ "openvdb::v13_0::initialize", "namespaceopenvdb_1_1v13__0.html#a5fb8281b837e5b8a3883fa2c097018c1", null ],
-    [ "openvdb::v13_0::uninitialize", "namespaceopenvdb_1_1v13__0.html#a723f0fabeb3f4aac47af74af41b7e72a", null ]
+    [ "openvdb::v13_0::initialize", "namespaceopenvdb_1_1v13__0.html#a25a40b6614565f755233080a384c35f1", null ],
+    [ "openvdb::v13_0::uninitialize", "namespaceopenvdb_1_1v13__0.html#a770669d2fd0d66cd94b6687dba9db6d1", null ]
 ];

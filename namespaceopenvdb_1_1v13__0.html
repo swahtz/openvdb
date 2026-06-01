@@ -498,10 +498,10 @@ Functions</h2></td></tr>
 <tr class="memdesc:a7ea4a9046558b7ec2cc44a7e34bc6b75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a <a class="el" href="classopenvdb_1_1v13__0_1_1Metadata.html" title="Base class for storing metadata information in a grid.">Metadata</a> to an output stream.  <br /></td></tr>
 <tr class="memitem:ae16960068f0fb1be1fb1bcb304d68600" id="r_ae16960068f0fb1be1fb1bcb304d68600"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae16960068f0fb1be1fb1bcb304d68600">operator&lt;&lt;</a> (std::ostream &amp;, const <a class="el" href="classopenvdb_1_1v13__0_1_1MetaMap.html">MetaMap</a> &amp;)</td></tr>
 <tr class="memdesc:ae16960068f0fb1be1fb1bcb304d68600"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a <a class="el" href="classopenvdb_1_1v13__0_1_1MetaMap.html" title="Container that maps names (strings) to values of arbitrary types.">MetaMap</a> to an output stream.  <br /></td></tr>
-<tr class="memitem:a5fb8281b837e5b8a3883fa2c097018c1" id="r_a5fb8281b837e5b8a3883fa2c097018c1"><td class="memItemLeft" align="right" valign="top">OPENVDB_IMPORT void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5fb8281b837e5b8a3883fa2c097018c1">initialize</a> ()</td></tr>
-<tr class="memdesc:a5fb8281b837e5b8a3883fa2c097018c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global registration of native <a class="el" href="classopenvdb_1_1v13__0_1_1Grid.html" title="Container class that associates a tree with a transform and metadata.">Grid</a>, Transform, <a class="el" href="classopenvdb_1_1v13__0_1_1Metadata.html" title="Base class for storing metadata information in a grid.">Metadata</a> and Point attribute types. Also initializes blosc (if enabled).  <br /></td></tr>
-<tr class="memitem:a723f0fabeb3f4aac47af74af41b7e72a" id="r_a723f0fabeb3f4aac47af74af41b7e72a"><td class="memItemLeft" align="right" valign="top">OPENVDB_IMPORT void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a723f0fabeb3f4aac47af74af41b7e72a">uninitialize</a> ()</td></tr>
-<tr class="memdesc:a723f0fabeb3f4aac47af74af41b7e72a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global deregistration of native <a class="el" href="classopenvdb_1_1v13__0_1_1Grid.html" title="Container class that associates a tree with a transform and metadata.">Grid</a>, Transform, <a class="el" href="classopenvdb_1_1v13__0_1_1Metadata.html" title="Base class for storing metadata information in a grid.">Metadata</a> and Point attribute types.  <br /></td></tr>
+<tr class="memitem:a25a40b6614565f755233080a384c35f1" id="r_a25a40b6614565f755233080a384c35f1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a25a40b6614565f755233080a384c35f1">initialize</a> ()</td></tr>
+<tr class="memdesc:a25a40b6614565f755233080a384c35f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global registration of native <a class="el" href="classopenvdb_1_1v13__0_1_1Grid.html" title="Container class that associates a tree with a transform and metadata.">Grid</a>, Transform, <a class="el" href="classopenvdb_1_1v13__0_1_1Metadata.html" title="Base class for storing metadata information in a grid.">Metadata</a> and Point attribute types. Also initializes blosc (if enabled).  <br /></td></tr>
+<tr class="memitem:a770669d2fd0d66cd94b6687dba9db6d1" id="r_a770669d2fd0d66cd94b6687dba9db6d1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a770669d2fd0d66cd94b6687dba9db6d1">uninitialize</a> ()</td></tr>
+<tr class="memdesc:a770669d2fd0d66cd94b6687dba9db6d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global deregistration of native <a class="el" href="classopenvdb_1_1v13__0_1_1Grid.html" title="Container class that associates a tree with a transform and metadata.">Grid</a>, Transform, <a class="el" href="classopenvdb_1_1v13__0_1_1Metadata.html" title="Base class for storing metadata information in a grid.">Metadata</a> and Point attribute types.  <br /></td></tr>
 <tr class="memitem:a1d6d50711273f3889375a79ef3c183c7" id="r_a1d6d50711273f3889375a79ef3c183c7"><td class="memTemplParams" colspan="2">template&lt;size_t Start, size_t End, typename OpT&gt; </td></tr>
 <tr class="memitem:a1d6d50711273f3889375a79ef3c183c7 template"><td class="memItemLeft" align="right" valign="top"><a class="el" href="Platform_8h.html#a857e437e165109054fd5c6ec359a00c2">OPENVDB_FORCE_INLINE</a> auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1d6d50711273f3889375a79ef3c183c7">foreachIndex</a> (OpT op)</td></tr>
 <tr class="memitem:a75d1d1799f33222e27cff304955dd249" id="r_a75d1d1799f33222e27cff304955dd249"><td class="memTemplParams" colspan="2">template&lt;size_t Start, size_t End, typename OpT, typename RetT&gt; </td></tr>
@@ -3512,14 +3512,14 @@ template&lt;typename GridType&gt; </div>
 
 </div>
 </div>
-<a id="a5fb8281b837e5b8a3883fa2c097018c1" name="a5fb8281b837e5b8a3883fa2c097018c1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5fb8281b837e5b8a3883fa2c097018c1">&#9670;&#160;</a></span>initialize()</h2>
+<a id="a25a40b6614565f755233080a384c35f1" name="a25a40b6614565f755233080a384c35f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a25a40b6614565f755233080a384c35f1">&#9670;&#160;</a></span>initialize()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">OPENVDB_IMPORT void initialize </td>
+          <td class="memname">void initialize </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
           <td></td>
@@ -3528,7 +3528,7 @@ template&lt;typename GridType&gt; </div>
 </div><div class="memdoc">
 
 <p>Global registration of native <a class="el" href="classopenvdb_1_1v13__0_1_1Grid.html" title="Container class that associates a tree with a transform and metadata.">Grid</a>, Transform, <a class="el" href="classopenvdb_1_1v13__0_1_1Metadata.html" title="Base class for storing metadata information in a grid.">Metadata</a> and Point attribute types. Also initializes blosc (if enabled). </p>
-<p>Calling this methods registers factory callbacks for the set of native grid, transform, metadata and point attribute types that OpenVDB supports by default. For most types, calling <a class="el" href="#a5fb8281b837e5b8a3883fa2c097018c1" title="Global registration of native Grid, Transform, Metadata and Point attribute types....">openvdb::initialize</a> is only required for serialization support. However, <a class="el" href="#a5fb8281b837e5b8a3883fa2c097018c1" title="Global registration of native Grid, Transform, Metadata and Point attribute types....">openvdb::initialize</a> must be called for PointDataGrid attribute usage as these callbacks are used in various tools. </p><dl class="section note"><dt>Note</dt><dd>This method is thread safe - it can be concurrently called multiple times, early exiting if it has already been called so long as <a class="el" href="#a723f0fabeb3f4aac47af74af41b7e72a" title="Global deregistration of native Grid, Transform, Metadata and Point attribute types.">openvdb::uninitialize()</a> has not been called. </dd></dl>
+<p>Calling this methods registers factory callbacks for the set of native grid, transform, metadata and point attribute types that OpenVDB supports by default. For most types, calling <a class="el" href="#a25a40b6614565f755233080a384c35f1" title="Global registration of native Grid, Transform, Metadata and Point attribute types....">openvdb::initialize</a> is only required for serialization support. However, <a class="el" href="#a25a40b6614565f755233080a384c35f1" title="Global registration of native Grid, Transform, Metadata and Point attribute types....">openvdb::initialize</a> must be called for PointDataGrid attribute usage as these callbacks are used in various tools. </p><dl class="section note"><dt>Note</dt><dd>This method is thread safe - it can be concurrently called multiple times, early exiting if it has already been called so long as <a class="el" href="#a770669d2fd0d66cd94b6687dba9db6d1" title="Global deregistration of native Grid, Transform, Metadata and Point attribute types.">openvdb::uninitialize()</a> has not been called. </dd></dl>
 
 </div>
 </div>
@@ -4601,14 +4601,14 @@ template&lt;&gt; </div>
 
 </div>
 </div>
-<a id="a723f0fabeb3f4aac47af74af41b7e72a" name="a723f0fabeb3f4aac47af74af41b7e72a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a723f0fabeb3f4aac47af74af41b7e72a">&#9670;&#160;</a></span>uninitialize()</h2>
+<a id="a770669d2fd0d66cd94b6687dba9db6d1" name="a770669d2fd0d66cd94b6687dba9db6d1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a770669d2fd0d66cd94b6687dba9db6d1">&#9670;&#160;</a></span>uninitialize()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">OPENVDB_IMPORT void uninitialize </td>
+          <td class="memname">void uninitialize </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
           <td></td>
@@ -4617,7 +4617,7 @@ template&lt;&gt; </div>
 </div><div class="memdoc">
 
 <p>Global deregistration of native <a class="el" href="classopenvdb_1_1v13__0_1_1Grid.html" title="Container class that associates a tree with a transform and metadata.">Grid</a>, Transform, <a class="el" href="classopenvdb_1_1v13__0_1_1Metadata.html" title="Base class for storing metadata information in a grid.">Metadata</a> and Point attribute types. </p>
-<p>Clears all registered factory callbacks. This includes everything registered by <a class="el" href="#a5fb8281b837e5b8a3883fa2c097018c1" title="Global registration of native Grid, Transform, Metadata and Point attribute types....">openvdb::initialize()</a> but will also include any manually registered types. </p><dl class="section note"><dt>Note</dt><dd>This method is thread safe - it can be concurrently called multiple times. </dd></dl>
+<p>Clears all registered factory callbacks. This includes everything registered by <a class="el" href="#a25a40b6614565f755233080a384c35f1" title="Global registration of native Grid, Transform, Metadata and Point attribute types....">openvdb::initialize()</a> but will also include any manually registered types. </p><dl class="section note"><dt>Note</dt><dd>This method is thread safe - it can be concurrently called multiple times. </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>This method does <em>not</em> uninitialize blosc. This is to avoid changing program states should another library also be using blosc. If blosc is enabled, consider calling blosc_destroy() in your application. </dd></dl>
 
 </div>

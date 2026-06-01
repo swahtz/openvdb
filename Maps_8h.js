@@ -36,9 +36,9 @@ var Maps_8h =
     [ "openvdb::v13_0::math::SpectralDecomposedMap", "namespaceopenvdb_1_1v13__0_1_1math.html#a8f75ea3273e88913c60b67cfc91a73e2", null ],
     [ "openvdb::v13_0::math::SymmetricMap", "namespaceopenvdb_1_1v13__0_1_1math.html#a34018cd65f6544c40ee082ae286220c1", null ],
     [ "openvdb::v13_0::math::UnitaryAndTranslationMap", "namespaceopenvdb_1_1v13__0_1_1math.html#a59a6b3113c1e0f4a9805590d70894b3c", null ],
-    [ "openvdb::v13_0::math::approxInverse", "namespaceopenvdb_1_1v13__0_1_1math.html#a64198006784d93a89bc2650324ed9a18", null ],
-    [ "openvdb::v13_0::math::createFullyDecomposedMap", "namespaceopenvdb_1_1v13__0_1_1math.html#a9b2ed6d6719f93e362bcb3ea56c4bf53", null ],
-    [ "openvdb::v13_0::math::createPolarDecomposedMap", "namespaceopenvdb_1_1v13__0_1_1math.html#a49c3da0d053695cf4c1a1d33dc6019f4", null ],
-    [ "openvdb::v13_0::math::createSymmetricMap", "namespaceopenvdb_1_1v13__0_1_1math.html#a3d323765603033f6fbace7f23a2340da", null ],
-    [ "openvdb::v13_0::math::simplify", "namespaceopenvdb_1_1v13__0_1_1math.html#a5868961b2a61552353985f417d48be40", null ]
+    [ "openvdb::v13_0::math::approxInverse", "namespaceopenvdb_1_1v13__0_1_1math.html#a249140ee1c72cb173f155446be3327cb", null ],
+    [ "openvdb::v13_0::math::createFullyDecomposedMap", "namespaceopenvdb_1_1v13__0_1_1math.html#ab19ec7cb050cbf88c593b54a25b50753", null ],
+    [ "openvdb::v13_0::math::createPolarDecomposedMap", "namespaceopenvdb_1_1v13__0_1_1math.html#a24bd5af9a2c1b48e650121b5d03a1c55", null ],
+    [ "openvdb::v13_0::math::createSymmetricMap", "namespaceopenvdb_1_1v13__0_1_1math.html#ac969d27ecdfa9bc37fe16b8e5140883d", null ],
+    [ "openvdb::v13_0::math::simplify", "namespaceopenvdb_1_1v13__0_1_1math.html#a8aac95ab96cc2b27793adf5331be1a8d", null ]
 ];

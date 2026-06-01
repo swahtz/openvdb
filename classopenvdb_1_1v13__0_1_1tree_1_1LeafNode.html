@@ -4865,7 +4865,7 @@ template&lt;typename T, <a class="el" href="namespaceopenvdb_1_1v13__0.html#a1a6
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="deprecated"><dt><b><a class="el" href="deprecated.html#_deprecated000004">Deprecated</a></b></dt><dd>"Use input type std::vector&lt;Index64&gt; for nodeCount." <br  />
+<dl class="deprecated"><dt><b><a class="el" href="deprecated.html#_deprecated000005">Deprecated</a></b></dt><dd>"Use input type std::vector&lt;Index64&gt; for nodeCount." <br  />
  </dd></dl>
 
 </div>
@@ -7155,7 +7155,7 @@ template&lt;typename OtherType&gt; </div>
 </div><div class="memdoc">
 
 <p>Difference this node's set of active values with the active values of the other node, whose <code><a class="el" href="#aecaeabaa9da616ae42bb20787878260d">ValueType</a></code> may be different. So a resulting voxel will be active only if the original voxel is active in this <a class="el" href="classopenvdb_1_1v13__0_1_1tree_1_1LeafNode.html" title="Templated block class to hold specific data types and a fixed number of values determined by Log2Dim....">LeafNode</a> and inactive in the other <a class="el" href="classopenvdb_1_1v13__0_1_1tree_1_1LeafNode.html" title="Templated block class to hold specific data types and a fixed number of values determined by Log2Dim....">LeafNode</a>. </p>
-<p>The last dummy argument is required to match the signature for InternalNode::topologyDifference.</p>
+<p>The last dummy argument is required to match the signature for <a class="el" href="classopenvdb_1_1v13__0_1_1tree_1_1InternalNode.html#a77c47237feeecc609582460c08dbb242" title="Difference this node&#39;s set of active values with the active values of the other node,...">InternalNode::topologyDifference</a>.</p>
 <dl class="section note"><dt>Note</dt><dd>This operation modifies only active states, not values. Also, because it can deactivate all of this node's voxels, consider subsequently calling prune. </dd></dl>
 
 </div>
@@ -7192,7 +7192,7 @@ template&lt;typename OtherType&gt; </div>
 </div><div class="memdoc">
 
 <p>Intersect this node's set of active values with the active values of the other node, whose <code><a class="el" href="#aecaeabaa9da616ae42bb20787878260d">ValueType</a></code> may be different. So a resulting voxel will be active only if both of the original voxels were active. </p>
-<p>The last dummy argument is required to match the signature for InternalNode::topologyIntersection.</p>
+<p>The last dummy argument is required to match the signature for <a class="el" href="classopenvdb_1_1v13__0_1_1tree_1_1InternalNode.html#a2973e4d0d6266e3e42f1457262164347" title="Intersects this tree&#39;s set of active values with the active values of the other tree,...">InternalNode::topologyIntersection</a>.</p>
 <dl class="section note"><dt>Note</dt><dd>This operation modifies only active states, not values. Also note that this operation can result in all voxels being inactive so consider subsequently calling prune. </dd></dl>
 
 </div>

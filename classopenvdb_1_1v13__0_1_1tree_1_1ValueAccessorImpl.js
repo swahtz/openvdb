@@ -52,6 +52,7 @@ var classopenvdb_1_1v13__0_1_1tree_1_1ValueAccessorImpl =
     [ "setValueOnly", "classopenvdb_1_1v13__0_1_1tree_1_1ValueAccessorImpl.html#a63ff695beda11ed9ef625a28ce8a5faf", null ],
     [ "touchLeaf", "classopenvdb_1_1v13__0_1_1tree_1_1ValueAccessorImpl.html#a1ce299163557df940e26d850c3f3e3ac", null ],
     [ "tree", "classopenvdb_1_1v13__0_1_1tree_1_1ValueAccessorImpl.html#ad91cb15b81ae99c90e54b0a12956ff09", null ],
+    [ "InternalNode", "classopenvdb_1_1v13__0_1_1tree_1_1ValueAccessorImpl.html#a5fc7cbf1929731e78733e1b476142b8a", null ],
     [ "LeafNode", "classopenvdb_1_1v13__0_1_1tree_1_1ValueAccessorImpl.html#aba19a13fc4d7d33601cb67afaea8b94f", null ],
     [ "RootNode", "classopenvdb_1_1v13__0_1_1tree_1_1ValueAccessorImpl.html#aff4f5e7209d5ad66394519639bd989f8", null ],
     [ "Tree", "classopenvdb_1_1v13__0_1_1tree_1_1ValueAccessorImpl.html#aa2f9f90efcd38311bf153da95f3561c0", null ],

@@ -1,6 +1,9 @@
 var GU__VDBPointTools_8h =
 [
     [ "GU_VDBPointList< VectorType >", "structGU__VDBPointList.html", "structGU__VDBPointList" ],
+    [ "IndexToOffsetOp< PointArrayType >", "structGU__VDBPointToolsInternal_1_1IndexToOffsetOp.html", "structGU__VDBPointToolsInternal_1_1IndexToOffsetOp" ],
+    [ "PackedMaskConstructor", "structGU__VDBPointToolsInternal_1_1PackedMaskConstructor.html", "structGU__VDBPointToolsInternal_1_1PackedMaskConstructor" ],
+    [ "GU_VDBPointToolsInternal::getPackedPrimitiveOffsets", "namespaceGU__VDBPointToolsInternal.html#a7aaa9b5d5e4ab683a4b5455fe6df3970", null ],
     [ "GUvdbConvertIndexToOffset", "GU__VDBPointTools_8h.html#a83e52b9d21520fc21d016f3bcdfdb31c", null ],
     [ "GUvdbCreateParticleAtlas", "GU__VDBPointTools_8h.html#a8864189181a1129f5725738384bb75b3", null ],
     [ "GUvdbCreatePointIndexGrid", "GU__VDBPointTools_8h.html#a5cb36e6b11c8dd24e3ec8afe86f7f2d8", null ],

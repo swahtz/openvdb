@@ -1,5 +1,8 @@
 var hierarchy =
 [
+    [ "InternalNode< _ChildNodeType, Log2Dim >::TopologyDifference< OtherInternalNode >::A", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1TopologyDifference_1_1A.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::TopologyIntersection< OtherInternalNode >::A", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1TopologyIntersection_1_1A.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::TopologyUnion< OtherInternalNode >::A", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1TopologyUnion_1_1A.html", null ],
     [ "ABTransform", "classopenvdb_1_1v13__0_1_1tools_1_1ABTransform.html", null ],
     [ "AttributeRegistry::AccessData", "structopenvdb_1_1v13__0_1_1ax_1_1AttributeRegistry_1_1AccessData.html", null ],
     [ "AttributeArray::AccessorBase", "structopenvdb_1_1v13__0_1_1points_1_1AttributeArray_1_1AccessorBase.html", [
@@ -69,6 +72,7 @@ var hierarchy =
     [ "LevelSetFilter< GridT, MaskT, InterruptT >::Filter::Avg< Axis >", "structopenvdb_1_1v13__0_1_1tools_1_1LevelSetFilter_1_1Filter_1_1Avg.html", null ],
     [ "AXLTYPE", "structAXLTYPE.html", null ],
     [ "AXSTYPE", "unionAXSTYPE.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::TopologyDifference< OtherInternalNode >::B", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1TopologyDifference_1_1B.html", null ],
     [ "BaseCamera", "classopenvdb_1_1v13__0_1_1tools_1_1BaseCamera.html", [
       [ "OrthographicCamera", "classopenvdb_1_1v13__0_1_1tools_1_1OrthographicCamera.html", null ],
       [ "PerspectiveCamera", "classopenvdb_1_1v13__0_1_1tools_1_1PerspectiveCamera.html", null ]
@@ -229,9 +233,12 @@ var hierarchy =
     [ "CheckNormGrad< GridT, TreeIterT, GradScheme >", "structopenvdb_1_1v13__0_1_1tools_1_1CheckNormGrad.html", null ],
     [ "CheckRange< GridT, MinInclusive, MaxInclusive, TreeIterT >", "structopenvdb_1_1v13__0_1_1tools_1_1CheckRange.html", null ],
     [ "Checksum", "classnanovdb_1_1Checksum.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::ChildAll", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ChildAll.html", null ],
     [ "LeafNode< T, Log2Dim >::ChildAll", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1ChildAll.html", null ],
     [ "LeafNode< BuildT, CoordT, MaskT, Log2Dim >::ChildNodeType", "structnanovdb_1_1LeafNode_1_1ChildNodeType.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::ChildOff", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ChildOff.html", null ],
     [ "LeafNode< T, Log2Dim >::ChildOff", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1ChildOff.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::ChildOn", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ChildOn.html", null ],
     [ "LeafNode< T, Log2Dim >::ChildOn", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1ChildOn.html", null ],
     [ "PointExecutable::CLI", "structopenvdb_1_1v13__0_1_1ax_1_1PointExecutable_1_1CLI.html", null ],
     [ "VolumeExecutable::CLI", "structopenvdb_1_1v13__0_1_1ax_1_1VolumeExecutable_1_1CLI.html", null ],
@@ -352,6 +359,7 @@ var hierarchy =
     [ "DDA< RayT, Log2Dim >", "classopenvdb_1_1v13__0_1_1math_1_1DDA.html", null ],
     [ "Tree< _RootNodeType >::DeallocateNodes< NodeType >", "structopenvdb_1_1v13__0_1_1tree_1_1Tree_1_1DeallocateNodes.html", null ],
     [ "DeepCopy", "classopenvdb_1_1v13__0_1_1DeepCopy.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::DeepCopy< OtherInternalNode >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1DeepCopy.html", null ],
     [ "DeformerTraits< DeformerT >", "structopenvdb_1_1v13__0_1_1points_1_1DeformerTraits.html", null ],
     [ "Delta< T >", "structopenvdb_1_1v13__0_1_1math_1_1Delta.html", null ],
     [ "Delta< double >", "structopenvdb_1_1v13__0_1_1math_1_1Delta_3_01double_01_4.html", null ],
@@ -364,7 +372,9 @@ var hierarchy =
     [ "DenseBase< ValueT, LayoutZYX >", "classopenvdb_1_1v13__0_1_1tools_1_1DenseBase_3_01ValueT_00_01LayoutZYX_01_4.html", [
       [ "Dense< ValueT, Layout >", "classopenvdb_1_1v13__0_1_1tools_1_1Dense.html", null ]
     ] ],
-    [ "Mask< LOG2DIM >::DenseIterator", "classnanovdb_1_1Mask_1_1DenseIterator.html", null ],
+    [ "Mask< LOG2DIM >::DenseIterator", "classnanovdb_1_1Mask_1_1DenseIterator.html", [
+      [ "InternalNode< ChildT, Log2Dim >::DenseIterator", "classnanovdb_1_1InternalNode_1_1DenseIterator.html", null ]
+    ] ],
     [ "DenseTransformer< _ValueT, OpType >", "classopenvdb_1_1v13__0_1_1tools_1_1DenseTransformer.html", null ],
     [ "DepthFirstNodeVisitor< NodeT, LEVEL >", "structopenvdb_1_1v13__0_1_1tools_1_1DepthFirstNodeVisitor.html", null ],
     [ "DepthFirstNodeVisitor< NodeT, 0 >", "structopenvdb_1_1v13__0_1_1tools_1_1DepthFirstNodeVisitor_3_01NodeT_00_010_01_4.html", null ],
@@ -563,7 +573,6 @@ var hierarchy =
     ] ],
     [ "GU_VDBPointList< VectorType >", "structGU__VDBPointList.html", null ],
     [ "Half", "classnanovdb_1_1Half.html", null ],
-    [ "half", "classhalf.html", null ],
     [ "HalfReader< IsReal, T >", "structopenvdb_1_1v13__0_1_1io_1_1HalfReader.html", null ],
     [ "HalfReader< false, T >", "structopenvdb_1_1v13__0_1_1io_1_1HalfReader_3_01false_00_01T_01_4.html", null ],
     [ "HalfReader< true, T >", "structopenvdb_1_1v13__0_1_1io_1_1HalfReader_3_01true_00_01T_01_4.html", null ],
@@ -579,15 +588,11 @@ var hierarchy =
     [ "Histogram", "classopenvdb_1_1v13__0_1_1math_1_1Histogram.html", null ],
     [ "HomogeneousMatMul", "structopenvdb_1_1v13__0_1_1tools_1_1HomogeneousMatMul.html", null ],
     [ "HostBuffer", "classnanovdb_1_1HostBuffer.html", null ],
-    [ "imath_half_uif", "unionimath__half__uif.html", null ],
     [ "InactivePruneOp< TreeT, TerminationLevel >", "classopenvdb_1_1v13__0_1_1tools_1_1InactivePruneOp.html", null ],
-    [ "index_sequence<... >", "structcxx14_1_1index__sequence.html", null ],
     [ "index_sequence< Ns >", "structopenvdb_1_1v13__0_1_1index__sequence.html", null ],
-    [ "index_sequence< Is... >", "structcxx14_1_1index__sequence.html", [
-      [ "make_index_sequence< 0, Is... >", "structcxx14_1_1make__index__sequence_3_010_00_01Is_8_8_8_01_4.html", null ]
-    ] ],
     [ "IndexIter< IteratorT, FilterT >", "classopenvdb_1_1v13__0_1_1points_1_1IndexIter.html", null ],
     [ "PointPartitioner< PointIndexType, BucketLog2Dim >::IndexIterator", "classopenvdb_1_1v13__0_1_1tools_1_1PointPartitioner_1_1IndexIterator.html", null ],
+    [ "IndexToOffsetOp< PointArrayType >", "structGU__VDBPointToolsInternal_1_1IndexToOffsetOp.html", null ],
     [ "Vector< T >::InfNormOp", "structopenvdb_1_1v13__0_1_1math_1_1pcg_1_1Vector_1_1InfNormOp.html", null ],
     [ "FastSweeping< SdfGridT, ExtValueT >::InitSdf", "structopenvdb_1_1v13__0_1_1tools_1_1FastSweeping_1_1InitSdf.html", null ],
     [ "AttributeSet::Descriptor::Inserter", "structopenvdb_1_1v13__0_1_1points_1_1AttributeSet_1_1Descriptor_1_1Inserter.html", null ],
@@ -596,6 +601,12 @@ var hierarchy =
     [ "int_t< 32 >", "structopenvdb_1_1v13__0_1_1ax_1_1codegen_1_1int__t_3_0132_01_4.html", null ],
     [ "int_t< 64 >", "structopenvdb_1_1v13__0_1_1ax_1_1codegen_1_1int__t_3_0164_01_4.html", null ],
     [ "int_t< 8 >", "structopenvdb_1_1v13__0_1_1ax_1_1codegen_1_1int__t_3_018_01_4.html", null ],
+    [ "InternalData< ChildT, LOG2DIM >", "structnanovdb_1_1InternalData.html", [
+      [ "InternalNode< NanoLeaf< BuildT >, 4 >", "classnanovdb_1_1InternalNode.html", null ],
+      [ "InternalNode< NanoLower< BuildT >, 5 >", "classnanovdb_1_1InternalNode.html", null ],
+      [ "InternalNode< ChildT, Log2Dim >", "classnanovdb_1_1InternalNode.html", null ]
+    ] ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >", "classopenvdb_1_1v13__0_1_1tree_1_1InternalNode.html", null ],
     [ "InterruptableTransfer", "structopenvdb_1_1v13__0_1_1points_1_1InterruptableTransfer.html", null ],
     [ "InvertedTree< HeadT, HeadLevel >", "structopenvdb_1_1v13__0_1_1tree_1_1iter_1_1InvertedTree.html", null ],
     [ "InvertedTree< HeadT, 1 >", "structopenvdb_1_1v13__0_1_1tree_1_1iter_1_1InvertedTree_3_01HeadT_00_011_01_4.html", null ],
@@ -675,8 +686,12 @@ var hierarchy =
     [ "PagedArray< ValueT, Log2PageSize >::Iterator", "classopenvdb_1_1v13__0_1_1util_1_1PagedArray_1_1Iterator.html", null ],
     [ "IteratorBase< MaskIterT, NodeT >", "classopenvdb_1_1v13__0_1_1tree_1_1IteratorBase.html", [
       [ "SparseIteratorBase< MaskIterT, ValueIter, NodeT, ValueT >", "structopenvdb_1_1v13__0_1_1tree_1_1SparseIteratorBase.html", null ],
-      [ "SparseIteratorBase< MaskIterT, ChildIter< NodeT, ChildT, MaskIterT, TagT >, NodeT, ChildT >", "structopenvdb_1_1v13__0_1_1tree_1_1SparseIteratorBase.html", null ],
-      [ "SparseIteratorBase< MaskIterT, ValueIter< NodeT, ValueT, MaskIterT, TagT >, NodeT, ValueT >", "structopenvdb_1_1v13__0_1_1tree_1_1SparseIteratorBase.html", null ],
+      [ "SparseIteratorBase< MaskIterT, ChildIter< NodeT, ChildT, MaskIterT, TagT >, NodeT, ChildT >", "structopenvdb_1_1v13__0_1_1tree_1_1SparseIteratorBase.html", [
+        [ "InternalNode< _ChildNodeType, Log2Dim >::ChildIter< NodeT, ChildT, MaskIterT, TagT >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ChildIter.html", null ]
+      ] ],
+      [ "SparseIteratorBase< MaskIterT, ValueIter< NodeT, ValueT, MaskIterT, TagT >, NodeT, ValueT >", "structopenvdb_1_1v13__0_1_1tree_1_1SparseIteratorBase.html", [
+        [ "InternalNode< _ChildNodeType, Log2Dim >::ValueIter< NodeT, ValueT, MaskIterT, TagT >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueIter.html", null ]
+      ] ],
       [ "SparseIteratorBase< MaskIterT, ChildIter< MaskIterT, NodeT, TagT >, NodeT, ValueType >", "structopenvdb_1_1v13__0_1_1tree_1_1SparseIteratorBase.html", [
         [ "LeafNode< T, Log2Dim >::ChildIter< MaskIterT, NodeT, TagT >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1ChildIter.html", null ]
       ] ],
@@ -692,6 +707,8 @@ var hierarchy =
         [ "LeafNode< bool, Log2Dim >::ValueIter< MaskIterT, NodeT, ValueT >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_3_01bool_00_01Log2Dim_01_4_1_1ValueIter.html", null ]
       ] ],
       [ "DenseIteratorBase< MaskIterT, IterT, NodeT, SetItemT, UnsetItemT >", "structopenvdb_1_1v13__0_1_1tree_1_1DenseIteratorBase.html", [
+        [ "InternalNode< _ChildNodeType, Log2Dim >::DenseIter< InternalNode, ChildNodeType, ValueType, ChildAll >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1DenseIter.html", null ],
+        [ "InternalNode< _ChildNodeType, Log2Dim >::DenseIter< const InternalNode, const ChildNodeType, ValueType, ChildAll >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1DenseIter.html", null ],
         [ "LeafNode< T, Log2Dim >::DenseIter< LeafNode, ValueType, ChildAll >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1DenseIter.html", null ],
         [ "LeafNode< T, Log2Dim >::DenseIter< const LeafNode, const ValueType, ChildAll >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1DenseIter.html", null ],
         [ "LeafNode< ValueMask, Log2Dim >::DenseIter< LeafNode, bool >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_3_01ValueMask_00_01Log2Dim_01_4_1_1DenseIter.html", null ],
@@ -700,6 +717,16 @@ var hierarchy =
         [ "LeafNode< bool, Log2Dim >::DenseIter< const LeafNode, const bool >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_3_01bool_00_01Log2Dim_01_4_1_1DenseIter.html", null ]
       ] ],
       [ "SparseIteratorBase< MaskIterT, IterT, NodeT, ItemT >", "structopenvdb_1_1v13__0_1_1tree_1_1SparseIteratorBase.html", [
+        [ "InternalNode< _ChildNodeType, Log2Dim >::ChildIter< InternalNode, ChildNodeType, MaskOnIterator, ChildOn >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ChildIter.html", null ],
+        [ "InternalNode< _ChildNodeType, Log2Dim >::ChildIter< const InternalNode, const ChildNodeType, MaskOnIterator, ChildOn >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ChildIter.html", null ],
+        [ "InternalNode< _ChildNodeType, Log2Dim >::ValueIter< InternalNode, const ValueType, MaskOffIterator, ChildOff >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueIter.html", null ],
+        [ "InternalNode< _ChildNodeType, Log2Dim >::ValueIter< const InternalNode, const ValueType, MaskOffIterator, ChildOff >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueIter.html", null ],
+        [ "InternalNode< _ChildNodeType, Log2Dim >::ValueIter< InternalNode, const ValueType, MaskOnIterator, ValueOn >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueIter.html", null ],
+        [ "InternalNode< _ChildNodeType, Log2Dim >::ValueIter< const InternalNode, const ValueType, MaskOnIterator, ValueOn >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueIter.html", null ],
+        [ "InternalNode< _ChildNodeType, Log2Dim >::ValueIter< InternalNode, const ValueType, MaskOffIterator, ValueOff >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueIter.html", null ],
+        [ "InternalNode< _ChildNodeType, Log2Dim >::ValueIter< const InternalNode, const ValueType, MaskOffIterator, ValueOff >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueIter.html", null ],
+        [ "InternalNode< _ChildNodeType, Log2Dim >::ValueIter< InternalNode, const ValueType, MaskOffIterator, ValueAll >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueIter.html", null ],
+        [ "InternalNode< _ChildNodeType, Log2Dim >::ValueIter< const InternalNode, const ValueType, MaskOffIterator, ValueAll >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueIter.html", null ],
         [ "LeafNode< T, Log2Dim >::ChildIter< MaskOnIterator, LeafNode, ChildOn >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1ChildIter.html", null ],
         [ "LeafNode< T, Log2Dim >::ChildIter< MaskOnIterator, const LeafNode, ChildOn >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1ChildIter.html", null ],
         [ "LeafNode< T, Log2Dim >::ChildIter< MaskOffIterator, LeafNode, ChildOff >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1ChildIter.html", null ],
@@ -742,7 +769,9 @@ var hierarchy =
     [ "IteratorBase< MaskDenseIterator, NodeT >", "classopenvdb_1_1v13__0_1_1tree_1_1IteratorBase.html", [
       [ "DenseIteratorBase< MaskDenseIterator, DenseIter, NodeT, ChildT, ValueT >", "structopenvdb_1_1v13__0_1_1tree_1_1DenseIteratorBase.html", null ],
       [ "DenseIteratorBase< MaskDenseIterator, DenseIter, NodeT, void, ValueT >", "structopenvdb_1_1v13__0_1_1tree_1_1DenseIteratorBase.html", null ],
-      [ "DenseIteratorBase< MaskDenseIterator, DenseIter< NodeT, ChildT, ValueT, TagT >, NodeT, ChildT, ValueT >", "structopenvdb_1_1v13__0_1_1tree_1_1DenseIteratorBase.html", null ],
+      [ "DenseIteratorBase< MaskDenseIterator, DenseIter< NodeT, ChildT, ValueT, TagT >, NodeT, ChildT, ValueT >", "structopenvdb_1_1v13__0_1_1tree_1_1DenseIteratorBase.html", [
+        [ "InternalNode< _ChildNodeType, Log2Dim >::DenseIter< NodeT, ChildT, ValueT, TagT >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1DenseIter.html", null ]
+      ] ],
       [ "DenseIteratorBase< MaskDenseIterator, DenseIter< NodeT, ValueT, TagT >, NodeT, void, ValueT >", "structopenvdb_1_1v13__0_1_1tree_1_1DenseIteratorBase.html", [
         [ "LeafNode< T, Log2Dim >::DenseIter< NodeT, ValueT, TagT >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1DenseIter.html", null ]
       ] ]
@@ -843,7 +872,6 @@ var hierarchy =
     [ "LLVMType< void >", "structopenvdb_1_1v13__0_1_1ax_1_1codegen_1_1LLVMType_3_01void_01_4.html", null ],
     [ "Logger", "classopenvdb_1_1v13__0_1_1ax_1_1Logger.html", null ],
     [ "Magnitude< InGridT, MaskGridType, InterruptT >", "classopenvdb_1_1v13__0_1_1tools_1_1Magnitude.html", null ],
-    [ "make_index_sequence< N, Is >", "structcxx14_1_1make__index__sequence.html", null ],
     [ "Map", "structnanovdb_1_1Map.html", null ],
     [ "MapAdapter< MapType, OpType, ResultType >", "structopenvdb_1_1v13__0_1_1math_1_1MapAdapter.html", null ],
     [ "MapBase", "classopenvdb_1_1v13__0_1_1math_1_1MapBase.html", [
@@ -862,6 +890,11 @@ var hierarchy =
     [ "Mask< LOG2DIM >", "classnanovdb_1_1Mask.html", null ],
     [ "MaskCompress< ValueT, MaskT >", "structopenvdb_1_1v13__0_1_1io_1_1MaskCompress.html", null ],
     [ "MaskIterT", null, [
+      [ "InternalNode< ChildT, Log2Dim >::ChildIter< InternalNode >", "classnanovdb_1_1InternalNode_1_1ChildIter.html", null ],
+      [ "InternalNode< ChildT, Log2Dim >::ChildIter< const InternalNode >", "classnanovdb_1_1InternalNode_1_1ChildIter.html", null ],
+      [ "InternalNode< ChildT, Log2Dim >::ChildIter< ParentT >", "classnanovdb_1_1InternalNode_1_1ChildIter.html", null ],
+      [ "InternalNode< ChildT, Log2Dim >::ValueIterator", "classnanovdb_1_1InternalNode_1_1ValueIterator.html", null ],
+      [ "InternalNode< ChildT, Log2Dim >::ValueOnIterator", "classnanovdb_1_1InternalNode_1_1ValueOnIterator.html", null ],
       [ "LeafNode< BuildT, CoordT, MaskT, Log2Dim >::ValueOffIterator", "classnanovdb_1_1LeafNode_1_1ValueOffIterator.html", null ],
       [ "LeafNode< BuildT, CoordT, MaskT, Log2Dim >::ValueOnIterator", "classnanovdb_1_1LeafNode_1_1ValueOnIterator.html", null ]
     ] ],
@@ -1063,6 +1096,7 @@ var hierarchy =
     [ "OpSub< ValueT >", "structopenvdb_1_1v13__0_1_1tools_1_1ds_1_1OpSub.html", null ],
     [ "Magnitude< InGridT, MaskGridType, InterruptT >::OpT", "structopenvdb_1_1v13__0_1_1tools_1_1Magnitude_1_1OpT.html", null ],
     [ "Normalize< GridT, MaskGridType, InterruptT >::OpT", "structopenvdb_1_1v13__0_1_1tools_1_1Normalize_1_1OpT.html", null ],
+    [ "PackedMaskConstructor", "structGU__VDBPointToolsInternal_1_1PackedMaskConstructor.html", null ],
     [ "Page", "classopenvdb_1_1v13__0_1_1compression_1_1Page.html", null ],
     [ "PagedArray< ValueT, Log2PageSize >::Page", "classopenvdb_1_1v13__0_1_1util_1_1PagedArray_1_1Page.html", null ],
     [ "PagedArray< ValueT, Log2PageSize >", "classopenvdb_1_1v13__0_1_1util_1_1PagedArray.html", null ],
@@ -1218,10 +1252,13 @@ var hierarchy =
       [ "SparseStencilMatrix< ValueType_, STENCIL_SIZE >::ConstRow", "classopenvdb_1_1v13__0_1_1math_1_1pcg_1_1SparseStencilMatrix_1_1ConstRow.html", null ]
     ] ],
     [ "SparseStencilMatrix< ValueType_, STENCIL_SIZE >::RowEditor", "classopenvdb_1_1v13__0_1_1math_1_1pcg_1_1SparseStencilMatrix_1_1RowEditor.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::SameConfiguration< OtherNodeType >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1SameConfiguration.html", null ],
     [ "LeafNode< T, Log2Dim >::SameConfiguration< OtherNodeType >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1SameConfiguration.html", null ],
     [ "LeafNode< bool, Log2Dim >::SameConfiguration< OtherNodeType >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_3_01bool_00_01Log2Dim_01_4_1_1SameConfiguration.html", null ],
     [ "LeafNode< ValueMask, Log2Dim >::SameConfiguration< OtherNodeType >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_3_01ValueMask_00_01Log2Dim_01_4_1_1SameConfiguration.html", null ],
     [ "RootNode< ChildType >::SameConfiguration< OtherNodeType >", "structopenvdb_1_1v13__0_1_1tree_1_1RootNode_1_1SameConfiguration.html", null ],
+    [ "SameInternalConfig< ChildT1, Dim1, NodeT2 >", "structopenvdb_1_1v13__0_1_1tree_1_1SameInternalConfig.html", null ],
+    [ "SameInternalConfig< ChildT1, Dim1, InternalNode< ChildT2, Dim1 > >", "structopenvdb_1_1v13__0_1_1tree_1_1SameInternalConfig_3_01ChildT1_00_01Dim1_00_01InternalNode_3_01ChildT2_00_01Dim1_01_4_01_4.html", null ],
     [ "SameLeafConfig< Dim1, NodeT2 >", "structopenvdb_1_1v13__0_1_1tree_1_1SameLeafConfig.html", null ],
     [ "SameLeafConfig< Dim1, LeafNode< T2, Dim1 > >", "structopenvdb_1_1v13__0_1_1tree_1_1SameLeafConfig_3_01Dim1_00_01LeafNode_3_01T2_00_01Dim1_01_4_01_4.html", null ],
     [ "SameLeafConfig< Dim1, openvdb::tools::PointIndexLeafNode< T2, Dim1 > >", "structopenvdb_1_1v13__0_1_1tree_1_1SameLeafConfig_3_01Dim1_00_01openvdb_1_1tools_1_1PointIndexLe41cd311c80d4680c95c6356200b891f8.html", null ],
@@ -1301,6 +1338,7 @@ var hierarchy =
     [ "TensorTraits< T, 0 >", "structnanovdb_1_1TensorTraits_3_01T_00_010_01_4.html", null ],
     [ "TensorTraits< T, 1 >", "structnanovdb_1_1TensorTraits_3_01T_00_011_01_4.html", null ],
     [ "TestLeafIO< typename >", "classTestLeafIO.html", null ],
+    [ "InternalData< ChildT, LOG2DIM >::Tile", "unionnanovdb_1_1InternalData_1_1Tile.html", null ],
     [ "RootData< ChildT >::Tile", "structnanovdb_1_1RootData_1_1Tile.html", null ],
     [ "TileData< ValueType >", "structopenvdb_1_1v13__0_1_1tools_1_1TileData.html", null ],
     [ "RootData< ChildT >::TileIter< DataT >", "classnanovdb_1_1RootData_1_1TileIter.html", null ],
@@ -1314,6 +1352,11 @@ var hierarchy =
     [ "TolerancePruneOp< TreeT, TerminationLevel >", "classopenvdb_1_1v13__0_1_1tools_1_1TolerancePruneOp.html", null ],
     [ "ToMaskGrid< GridType >", "structopenvdb_1_1v13__0_1_1tools_1_1gridop_1_1ToMaskGrid.html", null ],
     [ "TopologyCopy", "classopenvdb_1_1v13__0_1_1TopologyCopy.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::TopologyCopy1< OtherInternalNode >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1TopologyCopy1.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::TopologyCopy2< OtherInternalNode >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1TopologyCopy2.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::TopologyDifference< OtherInternalNode >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1TopologyDifference.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::TopologyIntersection< OtherInternalNode >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1TopologyIntersection.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::TopologyUnion< OtherInternalNode >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1TopologyUnion.html", null ],
     [ "TransferPointAttributesOp< GridType >", "classopenvdb__houdini_1_1TransferPointAttributesOp.html", null ],
     [ "TransferPrimitiveAttributesOp< GridType >", "classopenvdb__houdini_1_1TransferPrimitiveAttributesOp.html", null ],
     [ "Transform", "classopenvdb_1_1v13__0_1_1math_1_1Transform.html", null ],
@@ -1327,9 +1370,14 @@ var hierarchy =
     [ "TreeAdapter< Grid< _TreeType > >", "structopenvdb_1_1v13__0_1_1TreeAdapter_3_01Grid_3_01__TreeType_01_4_01_4.html", null ],
     [ "TreeAdapter< tree::ValueAccessor< _TreeType > >", "structopenvdb_1_1v13__0_1_1TreeAdapter_3_01tree_1_1ValueAccessor_3_01__TreeType_01_4_01_4.html", null ],
     [ "TreeBase", "classopenvdb_1_1v13__0_1_1tree_1_1TreeBase.html", [
+      [ "Tree< tree::RootNode< tree::InternalNode< tree::InternalNode< PointDataLeafNode< PointDataIndex32, 3 >, 4 >, 5 > > >", "classopenvdb_1_1v13__0_1_1tree_1_1Tree.html", null ],
       [ "Tree< typename NodeChainT::Back >", "classopenvdb_1_1v13__0_1_1tree_1_1Tree.html", null ],
+      [ "Tree< tree::RootNode< tree::InternalNode< tree::InternalNode< PointIndexLeafNode< PointIndex32, 3 >, 4 >, 5 > > >", "classopenvdb_1_1v13__0_1_1tree_1_1Tree.html", null ],
       [ "Tree< typename RootType::template ValueConverter< bool >::Type >", "classopenvdb_1_1v13__0_1_1tree_1_1Tree.html", null ],
       [ "Tree< typename RootNodeType::template ValueConverter< OtherValueType >::Type >", "classopenvdb_1_1v13__0_1_1tree_1_1Tree.html", null ],
+      [ "Tree< RootNode< InternalNode< LeafNode< T, N2 >, N1 > > >", "classopenvdb_1_1v13__0_1_1tree_1_1Tree.html", null ],
+      [ "Tree< RootNode< InternalNode< InternalNode< LeafNode< T, N3 >, N2 >, N1 > > >", "classopenvdb_1_1v13__0_1_1tree_1_1Tree.html", null ],
+      [ "Tree< RootNode< InternalNode< InternalNode< InternalNode< LeafNode< T, N4 >, N3 >, N2 >, N1 > > >", "classopenvdb_1_1v13__0_1_1tree_1_1Tree.html", null ],
       [ "Tree< _RootNodeType >", "classopenvdb_1_1v13__0_1_1tree_1_1Tree.html", null ]
     ] ],
     [ "TreeConverter< TreeType >", "structopenvdb_1_1v13__0_1_1points_1_1TreeConverter.html", null ],
@@ -1497,9 +1545,11 @@ var hierarchy =
       [ "ValueAccessorImpl< TreeType, IsSafe, void, openvdb::index_sequence< L0, L1 > >", "classopenvdb_1_1v13__0_1_1tree_1_1ValueAccessorImpl.html", null ],
       [ "ValueAccessorImpl< TreeType, IsSafe, void, openvdb::index_sequence< L0, L1, L2 > >", "classopenvdb_1_1v13__0_1_1tree_1_1ValueAccessorImpl.html", null ]
     ] ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::ValueAll", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueAll.html", null ],
     [ "LeafNode< T, Log2Dim >::ValueAll", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1ValueAll.html", null ],
     [ "PagedArray< ValueT, Log2PageSize >::ValueBuffer", "classopenvdb_1_1v13__0_1_1util_1_1PagedArray_1_1ValueBuffer.html", null ],
     [ "Grid< _TreeType >::ValueConverter< OtherValueType >", "structopenvdb_1_1v13__0_1_1Grid_1_1ValueConverter.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::ValueConverter< OtherValueType >", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueConverter.html", null ],
     [ "LeafNode< T, Log2Dim >::ValueConverter< OtherValueType >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1ValueConverter.html", null ],
     [ "LeafNode< bool, Log2Dim >::ValueConverter< ValueType >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_3_01bool_00_01Log2Dim_01_4_1_1ValueConverter.html", null ],
     [ "LeafNode< ValueMask, Log2Dim >::ValueConverter< OtherValueType >", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_3_01ValueMask_00_01Log2Dim_01_4_1_1ValueConverter.html", null ],
@@ -1511,7 +1561,9 @@ var hierarchy =
     [ "ValueMask", "classnanovdb_1_1ValueMask.html", null ],
     [ "ValueMask", "classopenvdb_1_1v13__0_1_1ValueMask.html", null ],
     [ "ValueMaskFilter< On >", "classopenvdb_1_1v13__0_1_1points_1_1ValueMaskFilter.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::ValueOff", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueOff.html", null ],
     [ "LeafNode< T, Log2Dim >::ValueOff", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1ValueOff.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::ValueOn", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1ValueOn.html", null ],
     [ "LeafNode< T, Log2Dim >::ValueOn", "structopenvdb_1_1v13__0_1_1tree_1_1LeafNode_1_1ValueOn.html", null ],
     [ "ValueOnIndex", "classnanovdb_1_1ValueOnIndex.html", null ],
     [ "ValueTraits< T, bool >", "structopenvdb_1_1v13__0_1_1ValueTraits.html", null ],
@@ -1546,5 +1598,6 @@ var hierarchy =
     [ "VolumeRender< IntersectorT, SamplerT >", "classopenvdb_1_1v13__0_1_1tools_1_1VolumeRender.html", null ],
     [ "VolumeToMesh", "structopenvdb_1_1v13__0_1_1tools_1_1VolumeToMesh.html", null ],
     [ "VolumeTransfer< TreeTypes >", "structopenvdb_1_1v13__0_1_1points_1_1VolumeTransfer.html", null ],
-    [ "VolumeTransfer< TreeT >", "structopenvdb_1_1v13__0_1_1points_1_1VolumeTransfer_3_01TreeT_01_4.html", null ]
+    [ "VolumeTransfer< TreeT >", "structopenvdb_1_1v13__0_1_1points_1_1VolumeTransfer_3_01TreeT_01_4.html", null ],
+    [ "InternalNode< _ChildNodeType, Log2Dim >::VoxelizeActiveTiles", "structopenvdb_1_1v13__0_1_1tree_1_1InternalNode_1_1VoxelizeActiveTiles.html", null ]
 ];
