@@ -25,15 +25,12 @@ option(OPENVDB_DOXYGEN_NANOVDB "Build NanoVDB documentation" ON)
 option(OPENVDB_DOXYGEN_INTERNAL [=[
 Enable documentation of methods and classes which have been explicitly marked as internal
 ]=] OFF)
-# When enabled, Doxygen's own WARN_AS_ERROR=FAIL_ON_WARNINGS fails the build
-# if it emits ANY warning. This is all-or-nothing -- it can't ignore the
-# pre-existing backlog in doc/changes.txt etc. -- so CI does NOT use this
-# option. CI instead lets Doxygen finish and runs
-# ci/check_doxygen_warnings.py, which filters the warning log against
-# doc/.doxygen_warning_suppress.txt and only fails on net-new warnings.
-#
-# Local users can still opt in to the all-or-nothing Doxygen-native gate by
-# passing `-DOPENVDB_DOXYGEN_WARN_AS_ERROR=ON`.
+# When enabled, Doxygen's WARN_AS_ERROR=FAIL_ON_WARNINGS makes any warning fail
+# the docs build (it still generates the docs and writes the full warning log
+# first, then exits non-zero). CI turns this ON -- see .github/workflows/docs.yml
+# -- so net-new doc warnings fail the PR that introduces them. Defaults OFF so a
+# local doc build isn't blocked by a stray warning from a different Doxygen
+# version; pass -DOPENVDB_DOXYGEN_WARN_AS_ERROR=ON to gate locally too.
 option(OPENVDB_DOXYGEN_WARN_AS_ERROR
   "Treat Doxygen warnings as errors" OFF)
 
@@ -75,9 +72,14 @@ if(OPENVDB_DOXYGEN_INTERNAL)
 endif()
 
 if(NOT OPENVDB_DOXYGEN_INTERNAL)
+  # Hide implementation-detail symbols in the lowercase `internal` namespaces
+  # (the project convention for non-public helpers). Note: do NOT add a
+  # capital-I "*Internal*" glob here -- it also matches the public
+  # tree::InternalNode (and nanovdb::InternalNode) class, silently dropping it
+  # from the docs and breaking every \link to it (e.g. InternalNode::childCount
+  # in doc/changes.txt) while its RootNode/LeafNode siblings resolve fine.
   set(DOXYGEN_EXCLUDE_SYMBOLS
-    "*internal*"
-    "*Internal*")
+    "*internal*")
 endif()
 
 set(DOXYGEN_PROJECT_NAME "OpenVDB")
@@ -214,6 +216,11 @@ set(DOXYGEN_PREDEFINED
   "OPENVDB_VERSION_NAME=v${OpenVDB_MAJOR_VERSION}_${OpenVDB_MINOR_VERSION}"
   "OPENVDB_ABI_VERSION_NUMBER=${OpenVDB_MAJOR_VERSION}"
   [[__declspec(x):= __attribute__(x):=]]
+  # Strip the symbol-visibility/export macro so Doxygen doesn't fold it into a
+  # declaration's name. Doxygen tolerates `class OPENVDB_API X` but mis-parses
+  # `enum OPENVDB_API X` (e.g. half::FromBitsTag in ext/imath/.../Half.h),
+  # reporting the enum as a documented-but-undeclared symbol.
+  "OPENVDB_API="
   # Replace the deprecated macros with doxygen deprecated comments. This ensures
   # that every bit of deprecated C++ is listed in the doxygen deprecated list,
   # even if it was not properly tagged
