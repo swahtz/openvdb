@@ -11,8 +11,8 @@ var namespacenanovdb_1_1io =
     ] ],
     [ "readUncompressedGrids", "namespacenanovdb_1_1io.html#a3c308ceec1559f7bc915fc945e825432", null ],
     [ "readUncompressedGrids", "namespacenanovdb_1_1io.html#ac39778460d81e2716a0c1ba0540309fa", null ],
-    [ "toCodec", "namespacenanovdb_1_1io.html#a4afb85da61fe99d19cf465508051b3cf", null ],
-    [ "toStr", "namespacenanovdb_1_1io.html#ade28f9433227abc4a0a09345c24492b9", null ],
+    [ "toCodec", "namespacenanovdb_1_1io.html#a19fedb0bec51f1007461551ecce3744c", null ],
+    [ "toStr", "namespacenanovdb_1_1io.html#ad6b4f5cb7afce645fbbddae56734d20c", null ],
     [ "writeUncompressedGrid", "namespacenanovdb_1_1io.html#a4454feedf9eb64dc06adc3d120a76e9c", null ],
     [ "writeUncompressedGrid", "namespacenanovdb_1_1io.html#a6eeb3fa504055ab8c3d2154964fab0bd", null ],
     [ "writeUncompressedGrids", "namespacenanovdb_1_1io.html#af12f433e63a43be1f540f7b3c85e99df", null ]

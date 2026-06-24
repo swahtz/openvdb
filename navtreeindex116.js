@@ -1,5 +1,7 @@
 var NAVTREEINDEX116 =
 {
+"structopenvdb_1_1v13__0_1_1math_1_1is__linear_3_01UnitaryMap_01_4.html":[14,0,3,0,4,89],
+"structopenvdb_1_1v13__0_1_1math_1_1is__linear_3_01UnitaryMap_01_4.html#a11ddd051208250c32dc4985abcafa86d":[13,0,4,0,4,89,0],
 "structopenvdb_1_1v13__0_1_1math_1_1is__linear_3_01UnitaryMap_01_4.html#a11ddd051208250c32dc4985abcafa86d":[14,0,3,0,4,89,0],
 "structopenvdb_1_1v13__0_1_1math_1_1is__scale.html":[13,0,4,0,4,90],
 "structopenvdb_1_1v13__0_1_1math_1_1is__scale.html":[14,0,3,0,4,90],
@@ -247,7 +249,5 @@ var NAVTREEINDEX116 =
 "structopenvdb_1_1v13__0_1_1points_1_1FilteredTransfer.html#adf51674704b039fbe64fb9b252677498":[14,0,3,0,5,14,0],
 "structopenvdb_1_1v13__0_1_1points_1_1FilteredTransfer.html#ae59d6c37a06a9f925bc8c6fb515abe12":[13,0,4,0,5,15,3],
 "structopenvdb_1_1v13__0_1_1points_1_1FilteredTransfer.html#ae59d6c37a06a9f925bc8c6fb515abe12":[14,0,3,0,5,14,3],
-"structopenvdb_1_1v13__0_1_1points_1_1FilteredTransfer.html#aee1f430ba223609067e082214ecfd95e":[13,0,4,0,5,15,1],
-"structopenvdb_1_1v13__0_1_1points_1_1FilteredTransfer.html#aee1f430ba223609067e082214ecfd95e":[14,0,3,0,5,14,1],
-"structopenvdb_1_1v13__0_1_1points_1_1FilteredTransfer_3_01NullFilter_01_4.html":[13,0,4,0,5,16]
+"structopenvdb_1_1v13__0_1_1points_1_1FilteredTransfer.html#aee1f430ba223609067e082214ecfd95e":[13,0,4,0,5,15,1]
 };

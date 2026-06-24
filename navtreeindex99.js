@@ -179,6 +179,8 @@ var NAVTREEINDEX99 =
 "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html":[14,0,3,0,0,0,12],
 "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#a02380ba656f6431fa853aee00eeb42e8":[13,0,4,0,0,0,13,16],
 "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#a02380ba656f6431fa853aee00eeb42e8":[14,0,3,0,0,0,12,16],
+"structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#a04b115200b795ee11da555f290a9e343":[13,0,4,0,0,0,13,8],
+"structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#a04b115200b795ee11da555f290a9e343":[14,0,3,0,0,0,12,8],
 "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#a0919d7b8b04ebb9fadd7eb3c99db5929":[13,0,4,0,0,0,13,18],
 "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#a0919d7b8b04ebb9fadd7eb3c99db5929":[14,0,3,0,0,0,12,18],
 "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#a1091c5df90c10095784d3240830ce913":[13,0,4,0,0,0,13,3],
@@ -247,7 +249,5 @@ var NAVTREEINDEX99 =
 "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#acac9cbaeea226ed297804c012dc12b16a86ec9f75634eb04e475dba4ee93933fb":[14,0,3,0,0,0,12,2,21],
 "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#acac9cbaeea226ed297804c012dc12b16a9501cd3ee5528bcca1e51ac8f0966994":[13,0,4,0,0,0,13,2,15],
 "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#acac9cbaeea226ed297804c012dc12b16a9501cd3ee5528bcca1e51ac8f0966994":[14,0,3,0,0,0,12,2,15],
-"structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#acac9cbaeea226ed297804c012dc12b16a9c67b92cc82860adc32a7bf2c3bdc31a":[13,0,4,0,0,0,13,2,4],
-"structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#acac9cbaeea226ed297804c012dc12b16a9c67b92cc82860adc32a7bf2c3bdc31a":[14,0,3,0,0,0,12,2,4],
-"structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#acac9cbaeea226ed297804c012dc12b16aa4c2677554db379f707701e1e033b766":[13,0,4,0,0,0,13,2,18]
+"structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ExternalVariable.html#acac9cbaeea226ed297804c012dc12b16a9c67b92cc82860adc32a7bf2c3bdc31a":[13,0,4,0,0,0,13,2,4]
 };

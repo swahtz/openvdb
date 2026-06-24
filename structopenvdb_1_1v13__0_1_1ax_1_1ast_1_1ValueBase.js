@@ -33,7 +33,7 @@ var structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ValueBase =
     ] ],
     [ "~ValueBase", "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ValueBase.html#a9b475ff6daed90896a4e02dccd2820ad", null ],
     [ "basetype", "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ValueBase.html#a86dc27762670e13b020876d41933d1b0", null ],
-    [ "child", "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ValueBase.html#acaccc17508c7a2bca1eec66867b734f2", null ],
+    [ "child", "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ValueBase.html#a04b115200b795ee11da555f290a9e343", null ],
     [ "childidx", "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ValueBase.html#a818561f63c248e8c2b3a329ad1cbd894", null ],
     [ "children", "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ValueBase.html#a188eac545914550f707f8ad7e2ba3dd0", null ],
     [ "copy", "structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ValueBase.html#a0db37ae8c886bc7077c313c0e542f004", null ],

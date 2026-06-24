@@ -184,8 +184,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a2d142a3e0977323d22ef495dd9d1faa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual method for accessing a node's base class. Note that if this is called explicitly on an instance of <a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1Node.html" title="The base abstract node which determines the interface and required methods for all derived concrete n...">ast::Node</a> (the top most base class) a nullptr is returned. This is primarily used by the <a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1Visitor.html" title="The Visitor class uses the Curiously Recursive Template Pattern (CRTP) to provide a customizable inte...">Visitor</a> to support hierarchical visits.     <br /></td></tr>
 <tr class="memitem:a254f3d183d1324e0b951c36f470c3476" id="r_a254f3d183d1324e0b951c36f470c3476"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a254f3d183d1324e0b951c36f470c3476">children</a> () const override final</td></tr>
 <tr class="memdesc:a254f3d183d1324e0b951c36f470c3476"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual method for accessing child information. Returns the number of children a given AST node owns.     <br /></td></tr>
-<tr class="memitem:abaa176ed7067d95e1292dbc702c8aa4c" id="r_abaa176ed7067d95e1292dbc702c8aa4c"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1Node.html">Node</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abaa176ed7067d95e1292dbc702c8aa4c">child</a> (const size_t) const override final</td></tr>
-<tr class="memdesc:abaa176ed7067d95e1292dbc702c8aa4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual method for accessing child information. Returns a const pointer to a child node at the given index. If the index is out of range, a nullptr is returned.     <br /></td></tr>
+<tr class="memitem:a28c0367fcbca64d63b7736e94325e889" id="r_a28c0367fcbca64d63b7736e94325e889"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1Node.html">Node</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a28c0367fcbca64d63b7736e94325e889">child</a> (const size_t index) const override final</td></tr>
+<tr class="memdesc:a28c0367fcbca64d63b7736e94325e889"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual method for accessing child information. Returns a const pointer to a child node at the given index. If the index is out of range, a nullptr is returned.     <br /></td></tr>
 <tr class="memitem:a0792a17c1626a7f0520537e751b8f7bc" id="r_a0792a17c1626a7f0520537e751b8f7bc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespaceopenvdb_1_1v13__0_1_1ax_1_1ast_1_1tokens.html#a60d9784a3ef15413eb7c90453b99f9be">tokens::KeywordToken</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0792a17c1626a7f0520537e751b8f7bc">keyword</a> () const</td></tr>
 <tr class="memdesc:a0792a17c1626a7f0520537e751b8f7bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Query the keyword held on this node.  <br /></td></tr>
 <tr id="pub-methods-0" class="groupHeader"><td colspan="2"><div class="groupHeader">Name/Type</div></td></tr>
@@ -424,8 +424,8 @@ Abstract (pure-virtual) nodes are not listed here. <a class="el" href="structope
 
 </div>
 </div>
-<a id="abaa176ed7067d95e1292dbc702c8aa4c" name="abaa176ed7067d95e1292dbc702c8aa4c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abaa176ed7067d95e1292dbc702c8aa4c">&#9670;&#160;</a></span>child()</h2>
+<a id="a28c0367fcbca64d63b7736e94325e889" name="a28c0367fcbca64d63b7736e94325e889"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a28c0367fcbca64d63b7736e94325e889">&#9670;&#160;</a></span>child()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -436,7 +436,7 @@ Abstract (pure-virtual) nodes are not listed here. <a class="el" href="structope
         <tr>
           <td class="memname">const <a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1Node.html">Node</a> * child </td>
           <td>(</td>
-          <td class="paramtype">const size_t</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td class="paramtype">const size_t</td>          <td class="paramname"><span class="paramname"><em>index</em></span></td><td>)</td>
           <td> const</td>
         </tr>
       </table>

@@ -1,5 +1,7 @@
 var NAVTREEINDEX130 =
 {
+"structopenvdb_1_1v13__0_1_1tree_1_1ReduceFilterOp.html#ae73ed80da99078dad6da7fa303f447d7":[14,0,3,0,7,42,4],
+"structopenvdb_1_1v13__0_1_1tree_1_1ReduceFilterOp.html#afeaa2bbefbe26251a68d41c0d8ce4183":[13,0,4,0,9,42,3],
 "structopenvdb_1_1v13__0_1_1tree_1_1ReduceFilterOp.html#afeaa2bbefbe26251a68d41c0d8ce4183":[14,0,3,0,7,42,3],
 "structopenvdb_1_1v13__0_1_1tree_1_1RootNodeCombineHelper.html":[13,0,4,0,9,44],
 "structopenvdb_1_1v13__0_1_1tree_1_1RootNodeCombineHelper.html":[14,0,3,0,7,44],
@@ -237,8 +239,8 @@ var NAVTREEINDEX130 =
 "structopenvdb_1_1v13__0_1_1tree_1_1iter_1_1InvertedTree.html#ab3773598ec5a6b9d42e3de221960e9e3":[14,0,3,0,7,0,0,1],
 "structopenvdb_1_1v13__0_1_1tree_1_1iter_1_1InvertedTree.html#ad81895d388160c58103826820a801231":[13,0,4,0,9,0,0,0],
 "structopenvdb_1_1v13__0_1_1tree_1_1iter_1_1InvertedTree.html#ad81895d388160c58103826820a801231":[13,0,4,0,9,0,1,0],
-"structopenvdb_1_1v13__0_1_1tree_1_1iter_1_1InvertedTree.html#ad81895d388160c58103826820a801231":[14,0,3,0,7,0,0,0],
 "structopenvdb_1_1v13__0_1_1tree_1_1iter_1_1InvertedTree.html#ad81895d388160c58103826820a801231":[14,0,3,0,7,0,1,0],
+"structopenvdb_1_1v13__0_1_1tree_1_1iter_1_1InvertedTree.html#ad81895d388160c58103826820a801231":[14,0,3,0,7,0,0,0],
 "structopenvdb_1_1v13__0_1_1tree_1_1iter_1_1InvertedTree_3_01HeadT_00_011_01_4.html":[13,0,4,0,9,0,1],
 "structopenvdb_1_1v13__0_1_1tree_1_1iter_1_1InvertedTree_3_01HeadT_00_011_01_4.html":[14,0,3,0,7,0,1],
 "structopenvdb_1_1v13__0_1_1tree_1_1iter_1_1InvertedTree_3_01HeadT_00_011_01_4.html#a7cc40cf4add67afac00c358e24b3877d":[13,0,4,0,9,0,1,1],
@@ -247,7 +249,5 @@ var NAVTREEINDEX130 =
 "structopenvdb_1_1v13__0_1_1tree_1_1leafmgr_1_1TreeTraits.html":[14,0,3,0,7,1,0],
 "structopenvdb_1_1v13__0_1_1tree_1_1leafmgr_1_1TreeTraits.html#a91b30a7597529af1089a1696e89efbb1":[13,0,4,0,9,1,0,0],
 "structopenvdb_1_1v13__0_1_1tree_1_1leafmgr_1_1TreeTraits.html#a91b30a7597529af1089a1696e89efbb1":[14,0,3,0,7,1,0,0],
-"structopenvdb_1_1v13__0_1_1tree_1_1leafmgr_1_1TreeTraits.html#aed029134efd058169d0a0d3cae1c6f32":[13,0,4,0,9,1,0,1],
-"structopenvdb_1_1v13__0_1_1tree_1_1leafmgr_1_1TreeTraits.html#aed029134efd058169d0a0d3cae1c6f32":[14,0,3,0,7,1,0,1],
-"structopenvdb_1_1v13__0_1_1tree_1_1leafmgr_1_1TreeTraits_3_01const_01TreeT_01_4.html":[13,0,4,0,9,1,1]
+"structopenvdb_1_1v13__0_1_1tree_1_1leafmgr_1_1TreeTraits.html#aed029134efd058169d0a0d3cae1c6f32":[13,0,4,0,9,1,0,1]
 };

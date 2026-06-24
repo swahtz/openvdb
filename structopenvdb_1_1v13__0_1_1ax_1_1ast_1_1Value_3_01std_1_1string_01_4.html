@@ -156,8 +156,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a9bf22d563ccc9251994acf0b8d2b249b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access the value as its stored type.  <br /></td></tr>
 <tr class="memitem:a188eac545914550f707f8ad7e2ba3dd0" id="r_a188eac545914550f707f8ad7e2ba3dd0"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ValueBase.html#a188eac545914550f707f8ad7e2ba3dd0">children</a> () const override</td></tr>
 <tr class="memdesc:a188eac545914550f707f8ad7e2ba3dd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual method for accessing child information. Returns the number of children a given AST node owns.  <br /></td></tr>
-<tr class="memitem:acaccc17508c7a2bca1eec66867b734f2" id="r_acaccc17508c7a2bca1eec66867b734f2"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1Node.html">Node</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ValueBase.html#acaccc17508c7a2bca1eec66867b734f2">child</a> (const size_t) const override</td></tr>
-<tr class="memdesc:acaccc17508c7a2bca1eec66867b734f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual method for accessing child information. Returns a const pointer to a child node at the given index. If the index is out of range, a nullptr is returned.  <br /></td></tr>
+<tr class="memitem:a04b115200b795ee11da555f290a9e343" id="r_a04b115200b795ee11da555f290a9e343"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1Node.html">Node</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1ValueBase.html#a04b115200b795ee11da555f290a9e343">child</a> (const size_t index) const override</td></tr>
+<tr class="memdesc:a04b115200b795ee11da555f290a9e343"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual method for accessing child information. Returns a const pointer to a child node at the given index. If the index is out of range, a nullptr is returned.  <br /></td></tr>
 <tr id="pub-methods-0" class="groupHeader"><td colspan="2"><div class="groupHeader">Name/Type</div></td></tr>
 <tr class="memitem:a4801cfec6882635913d378743433a560" id="r_a4801cfec6882635913d378743433a560"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1Node.html#a4801cfec6882635913d378743433a560">isType</a> () const</td></tr>
 <tr class="memdesc:a4801cfec6882635913d378743433a560"><td class="mdescLeft">&#160;</td><td class="mdescRight">Query whether or not this node is of a specific (derived) type. This method should be used to check if a node is of a particular abstract type. When checking concrete types, it's generally more efficient to check the return value of <a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1Node.html#aff05a5224dcc24c6b53540c2578fd757" title="Virtual method for accessing node type information.">Node::nodetype()</a>  <br /></td></tr>
@@ -414,8 +414,8 @@ Abstract (pure-virtual) nodes are not listed here. <a class="el" href="structope
 
 </div>
 </div>
-<a id="acaccc17508c7a2bca1eec66867b734f2" name="acaccc17508c7a2bca1eec66867b734f2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acaccc17508c7a2bca1eec66867b734f2">&#9670;&#160;</a></span>child()</h2>
+<a id="a04b115200b795ee11da555f290a9e343" name="a04b115200b795ee11da555f290a9e343"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a04b115200b795ee11da555f290a9e343">&#9670;&#160;</a></span>child()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -426,7 +426,7 @@ Abstract (pure-virtual) nodes are not listed here. <a class="el" href="structope
         <tr>
           <td class="memname">const <a class="el" href="structopenvdb_1_1v13__0_1_1ax_1_1ast_1_1Node.html">Node</a> * child </td>
           <td>(</td>
-          <td class="paramtype">const size_t</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td class="paramtype">const size_t</td>          <td class="paramname"><span class="paramname"><em>index</em></span></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
