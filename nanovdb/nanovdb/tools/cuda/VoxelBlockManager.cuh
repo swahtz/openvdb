@@ -35,6 +35,10 @@
 // available. Consumers can #ifdef on this to prefer the fused/streaming path.
 #define NANOVDB_VBM_HAS_STREAMING_BOX 1
 
+// Capability macro: block-centric gather build (buildVoxelBlockManagerGather) and its
+// leaf-count policy (VoxelBlockManagerBuildPolicy) are available.
+#define NANOVDB_VBM_HAS_GATHER_BUILD 1
+
 namespace nanovdb {
 
 namespace tools::cuda {
@@ -210,6 +214,22 @@ struct VoxelBlockManager : nanovdb::tools::VoxelBlockManagerBase<Log2BlockWidth>
     }
 };
 
+/// @brief Measured Blackwell build-policy bounds for block-centric gather construction.
+/// @details Callers that already have host grid metadata can select the builder without an
+/// additional device-to-host synchronization. Widths and topology sizes outside the measured
+/// region retain scatter construction (gather ~6-7% at low leaf count, regresses at large).
+template<int Log2BlockWidth>
+struct VoxelBlockManagerBuildPolicy
+{
+    static constexpr uint32_t GatherLeafLimit = Log2BlockWidth == 7 ? 196608u :
+        (Log2BlockWidth == 8 ? 131072u : 0u);
+
+    static constexpr bool useGather(uint32_t leafCount)
+    {
+        return GatherLeafLimit != 0u && leafCount <= GatherLeafLimit;
+    }
+};
+
 /// @brief This functor calculates the firstLeafID and jumpMap for the
 /// VoxelBlockManager over the subset of the Tree nodes specified by
 /// firstOffset, lastOffset, and nBlocks.
@@ -286,6 +306,52 @@ struct BuildVoxelBlockManagerFunctor
 
 };
 
+/// @brief Block-centric VBM builder. Each thread owns one output block, locates its starting
+/// leaf with binary search, and writes all jump words directly without atomics or pre-clearing.
+template<int Log2BlockWidth>
+struct BuildVoxelBlockManagerGatherFunctor
+{
+    static constexpr int BlockWidth = 1 << Log2BlockWidth;
+    static constexpr int JumpMapLength = BlockWidth / 64;
+    static constexpr int MaxThreadsPerBlock = 128;
+    static constexpr int MinBlocksPerMultiprocessor = 1;
+
+    void __device__ operator()(
+        uint64_t nBlocks,
+        uint64_t firstOffset,
+        uint64_t lastOffset,
+        uint32_t leafCount,
+        const NanoGrid<ValueOnIndex>* grid,
+        uint32_t* firstLeafID,
+        uint64_t* jumpMap)
+    {
+        const uint64_t blockID = uint64_t(blockIdx.x) * blockDim.x + threadIdx.x;
+        if (blockID >= nBlocks) return;
+        const auto* leaves = grid->tree().template getFirstNode<0>();
+        const uint64_t blockFirst = firstOffset + blockID * BlockWidth;
+        const uint64_t blockEnd = min(blockFirst + BlockWidth, lastOffset + 1);
+
+        uint32_t lo = 0, hi = leafCount;
+        while (lo + 1 < hi) {
+            const uint32_t mid = lo + ((hi - lo) >> 1);
+            if (leaves[mid].data()->firstOffset() <= blockFirst) lo = mid;
+            else hi = mid;
+        }
+        firstLeafID[blockID] = lo;
+        uint64_t* words = jumpMap + blockID * JumpMapLength;
+#pragma unroll
+        for (int word = 0; word < JumpMapLength; ++word) words[word] = 0;
+
+        for (uint32_t leafID = lo + 1; leafID < leafCount; ++leafID) {
+            const uint64_t leafFirst = leaves[leafID].data()->firstOffset();
+            if (leafFirst >= blockEnd) break;
+            if (leafFirst <= blockFirst) continue;
+            const uint64_t position = leafFirst - blockFirst;
+            words[position >> 6] |= UINT64_C(1) << (position & 63);
+        }
+    }
+};
+
 /// @brief Rebuild a VoxelBlockManager in-place using a pre-allocated handle.
 ///        Zeros the jumpMap on-stream and relaunches the build kernel. No memory
 ///        allocation is performed; the handle must already have correctly-sized
@@ -325,6 +391,27 @@ void buildVoxelBlockManager(
             handle.firstOffset(), handle.lastOffset(),
             static_cast<int>(handle.blockCount()),
             d_grid, handle.deviceFirstLeafID(), handle.deviceJumpMap());
+}
+
+/// @brief Rebuild a VBM with block-centric gather construction. This path performs no memset
+/// and no atomics; starting-leaf binary search is included in the kernel runtime. Best below
+/// VoxelBlockManagerBuildPolicy::GatherLeafLimit; scatter construction wins at large leaf counts.
+template<int Log2BlockWidth, typename BufferT>
+void buildVoxelBlockManagerGather(
+    NanoGrid<ValueOnIndex>*                            d_grid,
+    nanovdb::tools::VoxelBlockManagerHandle<BufferT>&  handle,
+    cudaStream_t                                       stream = 0,
+    uint32_t                                           leafCount = 0)
+{
+    if (!handle.blockCount()) return;
+    using Traits = util::cuda::DeviceGridTraits<ValueOnIndex>;
+    if (!leafCount)
+        leafCount = Traits::getTreeData(d_grid).mNodeCount[0];
+    using Op = BuildVoxelBlockManagerGatherFunctor<Log2BlockWidth>;
+    const uint64_t blocks = (handle.blockCount() + Op::MaxThreadsPerBlock - 1) / Op::MaxThreadsPerBlock;
+    util::cuda::operatorKernel<Op><<<static_cast<unsigned>(blocks), Op::MaxThreadsPerBlock, 0, stream>>>(
+        handle.blockCount(), handle.firstOffset(), handle.lastOffset(), leafCount,
+        d_grid, handle.deviceFirstLeafID(), handle.deviceJumpMap());
 }
 
 /// @brief Allocate device buffers and build a VoxelBlockManager on the device.
