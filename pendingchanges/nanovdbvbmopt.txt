@@ -1,0 +1,15 @@
+NanoVDB:
+  Improvements:
+  - Added VoxelBlockManager::forEachBoxStencil, a streaming 3x3x3 box-stencil callback that
+    visits (tap, index) without materializing a 27-element per-thread array, so consumers that
+    reduce or accumulate taps avoid the register and stack cost of the materialized form.
+  - Replaced the CUDA VoxelBlockManager inverse-map decode's O(nLeaves x 512) sweep with an
+    O(1)-per-slot select (jumpMap rank + 9-bit prefix sums + in-word bit select); ~2x faster
+    decode, which every stencil consumer benefits from.
+  - buildVoxelBlockManager now uses a single device metadata round trip (was two) and accepts a
+    caller-supplied lower-node count to skip the fetch entirely.
+  - Added buildVoxelBlockManagerGather, a block-centric build with no jumpMap memset and no
+    atomics (byte-identical metadata to the scatter build), gated by a leaf-count policy.
+  - Added consumer-matched cached-leaf stencil resolvers computeCrossStencil (7-tap) and
+    computeBoxStencilCached (27-tap): a per-leaf neighbor table turns each stencil tap into a
+    direct in-leaf lookup instead of a root-down tree traversal.
