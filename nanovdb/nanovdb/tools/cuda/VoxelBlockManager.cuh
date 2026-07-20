@@ -296,11 +296,15 @@ struct BuildVoxelBlockManagerFunctor
 ///                is read from device memory via DeviceGridTraits
 /// @param handle  Pre-allocated handle (blockCount/firstOffset/lastOffset already set)
 /// @param stream  CUDA stream (default 0)
+/// @param lowerCount  Lower-node count of the grid, if known by the caller (e.g. cached
+///                    from the topology op that produced the grid). Pass 0 (default) to
+///                    read it from device memory (one synchronous round trip).
 template<int Log2BlockWidth, typename BufferT>
 void buildVoxelBlockManager(
     NanoGrid<ValueOnIndex>*                            d_grid,
     nanovdb::tools::VoxelBlockManagerHandle<BufferT>&  handle,
-    cudaStream_t                                       stream = 0)
+    cudaStream_t                                       stream = 0,
+    uint32_t                                           lowerCount = 0)
 {
     static constexpr uint64_t BlockWidth    = uint64_t(1) << Log2BlockWidth;
     static constexpr uint64_t JumpMapLength = BlockWidth / 64;
@@ -313,7 +317,8 @@ void buildVoxelBlockManager(
         handle.blockCount() * JumpMapLength * sizeof(uint64_t), stream));
 
     using Traits = util::cuda::DeviceGridTraits<ValueOnIndex>;
-    const uint32_t lowerCount = Traits::getTreeData(d_grid).mNodeCount[1];
+    if (!lowerCount)
+        lowerCount = Traits::getTreeData(d_grid).mNodeCount[1];
     using Op = BuildVoxelBlockManagerFunctor<Log2BlockWidth>;
     util::cuda::operatorKernel<Op>
         <<<dim3(lowerCount, Op::SlicesPerLowerNode, 1), Op::MaxThreadsPerBlock, 0, stream>>>(
@@ -352,7 +357,14 @@ buildVoxelBlockManager(
 
     using Traits = util::cuda::DeviceGridTraits<ValueOnIndex>;
     if (!firstOffset) firstOffset = 1;
-    if (!lastOffset)  lastOffset  = Traits::getActiveVoxelCount(d_grid);
+    // One TreeData round trip supplies both the voxel count and the lower-node
+    // count needed by the build kernel (was: two synchronous device copies).
+    uint32_t lowerCount = 0;
+    if (!lastOffset) {
+        const auto treeData = Traits::getTreeData(d_grid);
+        lastOffset = treeData.mVoxelCount;
+        lowerCount = static_cast<uint32_t>(treeData.mNodeCount[1]);
+    }
     if (lastOffset < firstOffset) return nanovdb::tools::VoxelBlockManagerHandle<BufferT>{};
     NANOVDB_ASSERT(!((firstOffset - 1) & (BlockWidth - 1))); // firstOffset == 1 (mod BlockWidth)
     if (!nBlocks)     nBlocks     = (lastOffset - firstOffset + BlockWidth) >> Log2BlockWidth;
@@ -367,7 +379,7 @@ buildVoxelBlockManager(
         std::move(firstLeafIDBuf), std::move(jumpMapBuf),
         nBlocks, firstOffset, lastOffset);
 
-    buildVoxelBlockManager<Log2BlockWidth>(d_grid, handle, stream);
+    buildVoxelBlockManager<Log2BlockWidth>(d_grid, handle, stream, lowerCount);
     return handle;
 }
 
