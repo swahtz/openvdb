@@ -48,7 +48,7 @@ def timeline(x, y, w, label_host, label_stream, host_items, stream_items):
 
 # ---------------------------------------------------------------- title
 txt(82, 111.6, "TopologyBuilder — master's one grid per build vs. this PR's B grids per build", fs=15, bold=True, ha="center")
-txt(82, 109.1, "Toy example (the new unit test): refine three grids at once. g0 has 2 speculative root tiles, g1 is empty, g2 has 3. "
+txt(82, 109.1, "Toy example (the new unit test): refine three grids at once. g0 has 2 speculative root tiles, g1 is empty, g2 (voxels across the ±4096 boundaries) has 5. "
     "A root tile is a 4096³ region; each tile owns a Mask<5> (4 KiB) and a densified row of 32768 Mask<4> (16 MiB).", fs=8.5, ha="center", color="#444")
 
 # ================================================================ MASTER panel
@@ -61,7 +61,7 @@ txt(PX + 3, PY + PH - 6.4, "TopologyBuilderData holds one buffer pointer and one
 # three per-grid pipelines, stacked
 rows = [("g0  (2 tiles)", G0, G0F, "masks: 2 × (4 KiB + 16 MiB)", "Data: nodeCount, d_bufferPtr"),
         ("g1  (empty)",   G1, G1F, "masks: none",                 "Data: zeros"),
-        ("g2  (3 tiles)", G2, G2F, "masks: 3 × (4 KiB + 16 MiB)", "Data: nodeCount, d_bufferPtr")]
+        ("g2  (5 tiles)", G2, G2F, "masks: 5 × (4 KiB + 16 MiB)", "Data: nodeCount, d_bufferPtr")]
 y0 = PY + PH - 12.5
 for i, (name, c, cf, m, d) in enumerate(rows):
     y = y0 - i * 5.2
@@ -115,18 +115,18 @@ txt(PX2 + 3, PY2 + PH2 - 8.8, "(tileBase, upperBase, lowerBase, leafBase); the b
 
 # processed tiles row
 ry = PY2 + PH2 - 14.5
-txt(PX2 + 3, ry, "processed tiles (T = 5):", fs=8.5, bold=True)
-tiles = [("t0", G0, G0F, 0), ("t1", G0, G0F, 0), ("t2", G2, G2F, 2), ("t3", G2, G2F, 2), ("t4", G2, G2F, 2)]
+txt(PX2 + 3, ry, "processed tiles (T = 7):", fs=8.5, bold=True)
+tiles = [("t0", G0, G0F, 0), ("t1", G0, G0F, 0), ("t2", G2, G2F, 2), ("t3", G2, G2F, 2), ("t4", G2, G2F, 2), ("t5", G2, G2F, 2), ("t6", G2, G2F, 2)]
 tx = PX2 + 26
 for i, (t, c, cf, g) in enumerate(tiles):
     box(tx + i * 6.5, ry - 1.6, 5.6, 3.2, t, fc=cf, ec=c, fs=8, bold=True, color=c)
     txt(tx + i * 6.5 + 2.8, ry - 3.2, str(g), fs=7.5, ha="center", color="#555")
 txt(tx - 0.8, ry - 3.2, "tileToGrid:", fs=7.5, ha="right", color="#555")
-txt(tx + 34, ry, "g1 owns no tiles (tileCount = 0, tileBase = 2)", fs=7.5, color=G1, style="italic")
+txt(tx + 47, ry - 3.2, "g1 owns no tiles (tileCount = 0, tileBase = 2)", fs=7.5, color=G1, style="italic")
 
 # masks
-txt(tx + 66, ry + 0.9, "masks: ONE allocation, T Mask<5> + T × 32768 Mask<4>", fs=8, bold=True)
-txt(tx + 66, ry - 1.4, "the consumer's mask-fill functor is unchanged; per grid it gets  root(g),  upperMasks + tileBase[g],  lowerMasks + tileBase[g]", fs=7.3, color="#444")
+txt(tx + 72, ry + 0.9, "masks: ONE allocation, T Mask<5> + T × 32768 Mask<4>", fs=8, bold=True)
+txt(tx + 72, ry - 1.4, "the consumer's mask-fill functor is unchanged; per grid it gets\nroot(g),  upperMasks + tileBase[g],  lowerMasks + tileBase[g]", fs=7.3, color="#444")
 
 # scans row
 sy = ry - 8
@@ -143,7 +143,7 @@ dy = sy - 9.2
 txt(PX2 + 3, dy + 1.2, "Data[B] after gather:", fs=8.5, bold=True)
 datas = [("g0", G0, G0F, "tileBase 0, tileCount 2\nupperBase 0  lowerBase 0  leafBase 0\nnodeCount = {4, 3, 2}   mGridIndex 0 / 3"),
          ("g1", G1, G1F, "tileBase 2, tileCount 0\nbases = g2's (empty grids share the next base)\nnodeCount = {0, 0, 0}   mGridIndex 1 / 3"),
-         ("g2", G2, G2F, "tileBase 2, tileCount 3\nupperBase = upperOff[2], lowerBase = lowerOff[2·32768]\nnodeCount = {…}   mGridIndex 2 / 3")]
+         ("g2", G2, G2F, "tileBase 2, tileCount 5\nupperBase = upperOff[2], lowerBase = lowerOff[2·32768]\nnodeCount = {…}   mGridIndex 2 / 3")]
 for i, (n, c, cf, s) in enumerate(datas):
     x = tx + i * 31
     box(x, dy - 3.6, 30, 7.2, "", fc=cf, ec=c, r=0.8)
@@ -172,16 +172,16 @@ txt(rx + 1.5, rY - 4.6, "mOffset = vox[t] − vox[leafBase[g]] + 1  (restarts pe
 # timeline PR
 ty2 = PY2 + 5.2
 timeline(tx, ty2, 96, "host", "stream",
-         host_items=[(0, 13, "tile info D2H", GRNF, GRN, GRN), (27, 32, "sync", GRNF, GRN, GRN), (80, 85, "sync", GRNF, GRN, GRN), (85, 96, "GridHandle ctor", GRNF, GRN, GRN)],
+         host_items=[(0, 13, "speculative roots", GRNF, GRN, GRN), (27, 32, "sync", GRNF, GRN, GRN), (80, 85, "sync", GRNF, GRN, GRN), (85, 96, "GridHandle ctor", GRNF, GRN, GRN)],
          stream_items=[(13, 27, "count, all grids", BLUF, BLU, INK), (32, 80, "build kernels, all grids: header(B) · upper(T) · lower(T) · leaf · bbox · post", BLUF, BLU, INK)])
-txt(tx + 48, ty2 - 3.4, "two round trips per pass for the whole batch, then one handle; launch count is independent of B", fs=7.5, color=GRN, ha="center")
+txt(tx + 48, ty2 - 3.4, "the caller stages the roots, then one count sync and one final sync for the whole batch; launch count is independent of B", fs=7.5, color=GRN, ha="center")
 txt(PX2 + 3, ty2 + 2, "every batch:", fs=8.5, bold=True)
 
 # cost callout PR
 cx, cy, cw, ch = tx + 99, oy - 6.8, 32.5, 11
 box(cx, cy, cw, ch, "", fc=GRNF, ec=GRN, lw=1.4, r=1.2)
 txt(cx + 1.5, cy + ch - 2.5, "Cost per batch of B grids", fs=10, bold=True, color=GRN)
-txt(cx + 1.5, cy + ch - 5.4, "• 1 tile-info readback, 1 count sync, 1 final sync", fs=7.4)
+txt(cx + 1.5, cy + ch - 5.4, "• roots staged by the caller, 1 count sync, 1 final sync", fs=7.4)
 txt(cx + 1.5, cy + ch - 7.7, "• 1 allocation, 1 GridHandle, no merge", fs=7.4)
 txt(cx + 1.5, cy + ch - 10.0, "• B = 1: byte-identical output, consumers unchanged", fs=7.4)
 
