@@ -589,6 +589,24 @@ __hostdev__ inline static uint64_t alignmentPadding(const void* p)
 template <typename T>
 __hostdev__ inline static T* alignPtr(T* p){return util::PtrAdd<T>(p, alignmentPadding(p));}
 
+/// @brief Return @c *p. For 16- and 32-byte @c T (e.g. @c Vec4f, @c Vec4d) the compiler
+/// may assume @a p is aligned to @c sizeof(T), so the load compiles to one full-width
+/// vector load even though @c alignof(T) is only that of its components.
+/// @warning @a p must be aligned to @c sizeof(T) for those sizes. Node value arrays
+/// satisfy this because they start on a 32-byte boundary.
+/// @note Define @c NANOVDB_DISABLE_LOAD_ALIGNED to fall back to a plain load, e.g. for A/B benchmarks.
+template<typename T>
+__hostdev__ inline T loadAligned(const T* p)
+{
+#if !defined(NANOVDB_DISABLE_LOAD_ALIGNED) && (defined(__CUDA_ARCH__) || defined(__GNUC__) || defined(__clang__))
+    if constexpr (sizeof(T) == 16 || sizeof(T) == 32) {
+        NANOVDB_ASSERT(uint64_t(p) % sizeof(T) == 0);
+        return *static_cast<const T*>(__builtin_assume_aligned(p, sizeof(T)));
+    }
+#endif
+    return *p;
+}
+
 // --------------------------> isFloatingPoint(GridType) <------------------------------------
 
 /// @brief return true if the GridType maps to a floating point type
@@ -3194,7 +3212,7 @@ struct NANOVDB_ALIGN(NANOVDB_DATA_ALIGNMENT) InternalData
     {
         return sizeof(InternalData) - (24u + 8u + 2 * (sizeof(MaskT) + sizeof(ValueT) + sizeof(StatsT)) + (1u << (3 * LOG2DIM)) * (sizeof(ValueT) > 8u ? sizeof(ValueT) : 8u));
     }
-    alignas(32) Tile mTable[1u << (3 * LOG2DIM)]; // sizeof(ValueT) x (16*16*16 or 32*32*32)
+    alignas(32) Tile mTable[1u << (3 * LOG2DIM)]; // sizeof(ValueT) x (16*16*16 or 32*32*32). loadAligned relies on the 32B alignment
 
     __hostdev__ static uint64_t memUsage() { return sizeof(InternalData); }
 
@@ -3226,7 +3244,7 @@ struct NANOVDB_ALIGN(NANOVDB_DATA_ALIGNMENT) InternalData
     __hostdev__ ValueT getValue(uint32_t n) const
     {
         NANOVDB_ASSERT(mChildMask.isOff(n));
-        return mTable[n].value;
+        return loadAligned(&mTable[n].value);
     }
 
     __hostdev__ bool isActive(uint32_t n) const
@@ -3665,7 +3683,7 @@ struct NANOVDB_ALIGN(NANOVDB_DATA_ALIGNMENT) LeafData
     ValueType mMaximum; // typically 4B
     FloatType mAverage; // typically 4B, average of all the active values in this node and its child nodes
     FloatType mStdDevi; // typically 4B, standard deviation of all the active values in this node and its child nodes
-    alignas(32) ValueType mValues[1u << 3 * LOG2DIM];
+    alignas(32) ValueType mValues[1u << 3 * LOG2DIM]; // loadAligned relies on the 32B alignment
 
     /// @brief Return padding of this class in bytes, due to aliasing and 32B alignment
     ///
@@ -3678,7 +3696,7 @@ struct NANOVDB_ALIGN(NANOVDB_DATA_ALIGNMENT) LeafData
 
     __hostdev__ static bool hasStats() { return true; }
 
-    __hostdev__ ValueType getValue(uint32_t i) const { return mValues[i]; }
+    __hostdev__ ValueType getValue(uint32_t i) const { return loadAligned(mValues + i); }
     __hostdev__ void      setValueOnly(uint32_t offset, const ValueType& value) { mValues[offset] = value; }
     __hostdev__ void      setValue(uint32_t offset, const ValueType& value)
     {
@@ -6133,8 +6151,8 @@ struct GetValue
     static constexpr int LEVEL = 0;// minimum level for the descent during top-down traversal
     __hostdev__ static Type get(const NanoRoot<BuildT>& root) { return root.mBackground; }
     __hostdev__ static Type get(const typename NanoRoot<BuildT>::Tile& tile) { return tile.value; }
-    __hostdev__ static Type get(const NanoUpper<BuildT>& node, uint32_t n) { return node.mTable[n].value; }
-    __hostdev__ static Type get(const NanoLower<BuildT>& node, uint32_t n) { return node.mTable[n].value; }
+    __hostdev__ static Type get(const NanoUpper<BuildT>& node, uint32_t n) { return loadAligned(&node.mTable[n].value); }
+    __hostdev__ static Type get(const NanoLower<BuildT>& node, uint32_t n) { return loadAligned(&node.mTable[n].value); }
     __hostdev__ static Type get(const NanoLeaf<BuildT>& leaf,  uint32_t n) { return leaf.getValue(n); } // works with all build types
 }; // GetValue<BuildT>
 
@@ -6262,12 +6280,12 @@ struct ProbeValue
     }
     __hostdev__ static Type get(const NanoUpper<BuildT>& node, uint32_t n, ValueT& v)
     {
-        v = node.mTable[n].value;
+        v = loadAligned(&node.mTable[n].value);
         return node.mValueMask.isOn(n);
     }
     __hostdev__ static Type get(const NanoLower<BuildT>& node, uint32_t n, ValueT& v)
     {
-        v = node.mTable[n].value;
+        v = loadAligned(&node.mTable[n].value);
         return node.mValueMask.isOn(n);
     }
     __hostdev__ static Type get(const NanoLeaf<BuildT>& leaf, uint32_t n, ValueT& v)
