@@ -121,7 +121,7 @@ tx = PX2 + 26
 for i, (t, c, cf, g) in enumerate(tiles):
     box(tx + i * 6.5, ry - 1.6, 5.6, 3.2, t, fc=cf, ec=c, fs=8, bold=True, color=c)
     txt(tx + i * 6.5 + 2.8, ry - 3.2, str(g), fs=7.5, ha="center", color="#555")
-txt(tx - 0.8, ry - 3.2, "tileToGrid:", fs=7.5, ha="right", color="#555")
+txt(tx - 0.8, ry - 3.2, "grid (by tileBase):", fs=7.5, ha="right", color="#555")
 txt(tx + 47, ry - 3.2, "g1 owns no tiles (tileCount = 0, tileBase = 2)", fs=7.5, color=G1, style="italic")
 
 # masks
@@ -135,8 +135,8 @@ box(tx, sy - 1.6, 30, 3.2, "EnumerateNodes over T tiles → 3 inclusive scans", 
 arrow(tx + 30, sy, tx + 32.5, sy, color="#888", lw=0.8)
 box(tx + 33, sy - 1.6, 44, 3.2, "GatherNodeCounts (B threads): counts and bases at each grid's tile boundaries", fc=GRNF, ec=GRN, fs=7.3, color=GRN)
 arrow(tx + 77, sy, tx + 79.5, sy, color="#888", lw=0.8)
-box(tx + 80, sy - 1.6, 19, 3.2, "ONE D2H of Data[B]", fc=GRNF, ec=GRN, fs=7.5, bold=True, color=GRN)
-txt(tx + 100.5, sy, "(master: three scalar D2H copies)", fs=7.5, color="#555", style="italic")
+box(tx + 80, sy - 1.6, 24, 3.2, "ONE strided D2H: counts → Data[B]", fc=GRNF, ec=GRN, fs=7.3, bold=True, color=GRN)
+txt(tx + 105.5, sy, "(master: three scalar D2H copies)", fs=7.5, color="#555", style="italic")
 
 # Data[B] boxes
 dy = sy - 9.2
@@ -164,7 +164,7 @@ txt(tx, oy - 3.4, "d_bufferPtr[g] = base + Σ size[<g];  mGridSize per grid;  th
 rx, rY = tx + 95, dy + 0.5
 box(rx, rY - 6.5, 36.5, 12.5, "", fc="white", ec=GRN, lw=1.2, r=1.0)
 txt(rx + 1.5, rY + 4.2, "rebasing, in every build kernel thread", fs=8.5, bold=True, color=GRN)
-txt(rx + 1.5, rY + 1.7, "tile-indexed (upper, lower):  g = tileToGrid[t]", fs=7.0)
+txt(rx + 1.5, rY + 1.7, "tile-indexed (upper, lower):  g = gridOfIndex(tileBase, t)", fs=7.0)
 txt(rx + 1.5, rY - 0.4, "node-indexed (leaf, bbox):  g = gridOfIndex(leafBase, t)", fs=7.0)
 txt(rx + 1.5, rY - 2.5, "local = t − leafBase[g], into grid g's own node array", fs=7.0)
 txt(rx + 1.5, rY - 4.6, "mOffset = vox[t] − vox[leafBase[g]] + 1  (restarts per grid)", fs=7.0)
@@ -172,19 +172,20 @@ txt(rx + 1.5, rY - 4.6, "mOffset = vox[t] − vox[leafBase[g]] + 1  (restarts pe
 # timeline PR
 ty2 = PY2 + 5.2
 timeline(tx, ty2, 96, "host", "stream",
-         host_items=[(0, 13, "speculative roots", GRNF, GRN, GRN), (27, 32, "sync", GRNF, GRN, GRN), (80, 85, "sync", GRNF, GRN, GRN), (85, 96, "GridHandle ctor", GRNF, GRN, GRN)],
+         host_items=[(0, 13, "speculative roots", GRNF, GRN, GRN), (27, 32, "wait", GRNF, GRN, GRN), (80, 85, "sync", GRNF, GRN, GRN), (85, 96, "GridHandle ctor", GRNF, GRN, GRN)],
          stream_items=[(13, 27, "count, all grids", BLUF, BLU, INK), (32, 80, "build kernels, all grids: header(B) · upper(T) · lower(T) · leaf · bbox · post", BLUF, BLU, INK)])
-txt(tx + 48, ty2 - 3.4, "the caller stages the roots, then one count sync and one final sync for the whole batch; launch count is independent of B", fs=7.5, color=GRN, ha="center")
+txt(tx + 48, ty2 - 3.4, "the caller stages the roots; getBuffer waits once for the counts (an event, not a stream sync) and the handle syncs once at the end; launch count is independent of B", fs=7.5, color=GRN, ha="center")
 txt(PX2 + 3, ty2 + 2, "every batch:", fs=8.5, bold=True)
 
 # cost callout PR
 cx, cy, cw, ch = tx + 99, oy - 6.8, 32.5, 11
 box(cx, cy, cw, ch, "", fc=GRNF, ec=GRN, lw=1.4, r=1.2)
 txt(cx + 1.5, cy + ch - 2.5, "Cost per batch of B grids", fs=10, bold=True, color=GRN)
-txt(cx + 1.5, cy + ch - 5.4, "• roots staged by the caller, 1 count sync, 1 final sync", fs=7.4)
+txt(cx + 1.5, cy + ch - 5.4, "• caller stages roots; getBuffer waits once; 1 final sync", fs=7.4)
 txt(cx + 1.5, cy + ch - 7.7, "• 1 allocation, 1 GridHandle, no merge", fs=7.4)
 txt(cx + 1.5, cy + ch - 10.0, "• B = 1: byte-identical output, consumers unchanged", fs=7.4)
 
-out = "/tmp/claude-1000/-home-jswartz-Development-fvdb-core/eb17c6bb-d3e3-4223-a060-08f6db45b115/scratchpad/topology_builder_batch_diagram.png"
+import os
+out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "topology_builder_batch_diagram.png")
 fig.savefig(out, dpi=200, facecolor="white")
 print(out)
