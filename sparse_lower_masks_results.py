@@ -9,9 +9,9 @@ RED, GRN, INK = "#c62828", "#2e7d32", "#222222"
 # RTX PRO 6000 Blackwell, CUDA 13.2. Medians of 10 runs (5 for the lattices, meshes and
 # mcns10442, 30 for dragon and crawler). Peak is all device memory the build holds, output included.
 ROWS = [
-    ("shell64 ×64, batched",            "refine",  1.767,  1071.9, 1.402,   33.1,   31.39),
+    ("shell64 ×64, batched",            "refine",  1.767,  1071.9, 1.221,   33.1,   31.39),
     ("corner64 ×64, batched",           "dilate",  8.099,  8450.0, 2.115,   80.4,   76.37),
-    ("scattered ×4, batched",           "refine",  2.461,  3152.3, 0.456,   47.2,   45.09),
+    ("scattered ×4, batched",           "refine",  2.461,  3152.3, 0.352,   47.2,   45.09),
     ("shell512 ×4, batched",            "dilate",  0.345,    82.2, 0.323,   20.3,   16.87),
     ("block128 ×8, batched",            "dilate",  1.271,  1068.2, 0.590,   28.4,   27.76),
     ("lattice of 2,048 tiles",          "coarsen", 3.408,  4293.4, 0.387,  134.9,  132.34),
